@@ -102,10 +102,17 @@ def make_sign(path: Path):
 
 
 def make_clip(path: Path):
-    """3 s of test pattern with a tone, so every video target (GIF, WEBM, MP3) has input."""
+    """3 s of test pattern with a tone, so every video target (GIF, WEBM, MP3) has input.
+    The Linux and Mac runs share make_files: without any ffmpeg there, no clip (they don't use it)."""
     import subprocess
-    import imageio_ffmpeg
-    subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(), "-loglevel", "error", "-y",
+    try:
+        import imageio_ffmpeg
+        exe = imageio_ffmpeg.get_ffmpeg_exe()
+    except ImportError:
+        exe = shutil.which("ffmpeg")
+    if exe is None:
+        return
+    subprocess.run([exe, "-loglevel", "error", "-y",
                     "-f", "lavfi", "-i", "testsrc=duration=3:size=640x360:rate=24",
                     "-f", "lavfi", "-i", "sine=frequency=440:duration=3",
                     "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", str(path)],
