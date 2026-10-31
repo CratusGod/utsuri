@@ -124,7 +124,7 @@ def test_watermark_shows_only_the_controls_of_its_mode(monkeypatch, notes, six):
     seen = {}
 
     def act(w):
-        text_only, image_only = (w.text, w.size, w.angle, w.color_btn), (w.pick, w.scale)
+        text_only, image_only = (w.text, w.size_slider, w.angle, w.color_btn), (w.pick, w.scale)
         seen["text"] = (all(not x.isHidden() for x in text_only), all(x.isHidden() for x in image_only))
         w.mode.button(1).setChecked(True)
         w._refresh()
@@ -133,6 +133,17 @@ def test_watermark_shows_only_the_controls_of_its_mode(monkeypatch, notes, six):
         w.close()
     run_window(monkeypatch, "watermark", [six], act)
     assert seen == {"text": (True, True), "image": (True, True), "opacity": True}
+
+
+def test_tool_windows_keep_qwidget_size(monkeypatch, notes, six):
+    """The glass paintEvent calls self.size(): a widget attribute named `size` broke every repaint."""
+    from PySide6.QtCore import QSize
+
+    def act(w):
+        assert isinstance(w.size(), QSize)
+        w.grab()  # runs paintEvent
+        w.close()
+    run_window(monkeypatch, "watermark", [six], act)
 
 
 def test_watermark_window_stamps_an_image(monkeypatch, notes, six, png):

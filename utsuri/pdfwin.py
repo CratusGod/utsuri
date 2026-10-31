@@ -309,8 +309,8 @@ class WatermarkWindow(ToolWindow):
         self.text = QLineEdit("DRAFT")
         g.addWidget(QLabel("Text"), 2, 0)
         g.addWidget(self.text, 2, 1, 1, 2)
-        self.size = slider(12, 160, 72)
-        slider_row(g, 3, "Size", self.size, lambda v: f"{v} pt")
+        self.size_slider = slider(12, 160, 72)  # not self.size: that would hide QWidget.size()
+        slider_row(g, 3, "Size", self.size_slider, lambda v: f"{v} pt")
         self.opacity = slider(1, 100, 15)  # also fades a stamped image
         slider_row(g, 4, "Opacity", self.opacity, lambda v: f"{v}%")
         self.angle = slider(0, 90, 45)
@@ -345,7 +345,7 @@ class WatermarkWindow(ToolWindow):
         self.body.addLayout(self.footer("Apply", self.save))
 
         self._timer = QTimer(self, singleShot=True, interval=150, timeout=self._refresh)
-        for sig in (self.text.textChanged, self.size.valueChanged, self.opacity.valueChanged,
+        for sig in (self.text.textChanged, self.size_slider.valueChanged, self.opacity.valueChanged,
                     self.angle.valueChanged, self.scale.valueChanged, self.where.currentIndexChanged,
                     self.pages.textChanged, self.mode.idToggled):
             sig.connect(lambda *_: self._timer.start())
@@ -378,7 +378,7 @@ class WatermarkWindow(ToolWindow):
 
     def _options(self) -> dict:
         c = self.color
-        return {"text": self.text.text(), "size": self.size.value(), "opacity": self.opacity.value() / 100,
+        return {"text": self.text.text(), "size": self.size_slider.value(), "opacity": self.opacity.value() / 100,
                 "angle": self.angle.value(), "color": (c.redF(), c.greenF(), c.blueF()),
                 "where": self.where.currentData()}
 
