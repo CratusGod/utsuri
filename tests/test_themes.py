@@ -53,6 +53,30 @@ def test_a_theme_moves_tints_onto_its_surface_keeping_the_shade():
     assert (lighter.red(), lighter.green(), lighter.blue()) == (base.red() + 16, base.green() + 12, base.blue() + 22)
 
 
+def test_each_theme_tints_the_liquid_glass_differently():
+    tints = {}
+    for name in themes.names():
+        themes.set_theme(name)
+        tints[name] = themes.liquid_tint()[:3]
+    assert len(set(tints.values())) == len(tints), tints
+
+
+def test_liquid_glass_default_is_unchanged_and_themes_colour_it():
+    from PIL import Image
+    from utsuri import liquid
+    bg = Image.new("RGB", (80, 80), (40, 90, 120))
+    sdf = liquid.sdf_circle(80, 80, 40, 40, 30)
+    default, _ = liquid.render(bg, sdf, liquid.GlassStyle(), )
+    assert themes.rim_colors() == ((255, 255, 255), (255, 255, 255))
+    looks = {}
+    for name in themes.names()[1:]:
+        themes.set_theme(name)
+        img, _ = liquid.render(bg, sdf, liquid.GlassStyle())
+        looks[name] = img.tobytes()
+        assert looks[name] != default.tobytes()
+    assert len(set(looks.values())) == len(looks)
+
+
 def test_unknown_theme_name_falls_back_to_default():
     assert themes.set_theme("No Such Theme").name == themes.DEFAULT
 

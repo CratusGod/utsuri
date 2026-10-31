@@ -131,9 +131,10 @@ def render(backdrop: Image.Image, sdf: np.ndarray, style: GlassStyle = GlassStyl
     is_light = luminance(np.asarray(bg, np.float32), alpha) > 0.62
 
     # adaptive tint keeps text legible on any wallpaper
+    from .themes import liquid_tint, rim_colors
     if tint is None:
-        from .themes import liquid_tint
         tint = (236, 232, 246, 0.14) if is_light else liquid_tint()
+    lit, back_lit = (np.array(c, np.float32) for c in rim_colors())  # white, or the theme's colours
     tr, tg, tb, ta = tint
     out = out * (1 - ta) + np.array([tr, tg, tb], np.float32) * ta
 
@@ -144,7 +145,7 @@ def render(backdrop: Image.Image, sdf: np.ndarray, style: GlassStyle = GlassStyl
         out -= (np.clip(1 - depth / 1.6, 0, 1) * (alpha > 0))[..., None] * 40
     else:
         # inner bezel glow (light gathering in the curved edge)
-        out += (profile ** 2)[..., None] * 38
+        out += (profile ** 2)[..., None] * lit * (38 / 255)
 
     # specular rim: thin bright line, strongest where the edge faces the light
     lx, ly = style.light
@@ -152,8 +153,9 @@ def render(backdrop: Image.Image, sdf: np.ndarray, style: GlassStyle = GlassStyl
     back = np.clip(-(nx * lx + ny * ly), 0, 1)
     rim = np.clip(1 - depth / 2.2, 0, 1) * inside
     rim2 = np.clip(1 - depth / 7.0, 0, 1) * inside
-    spec = rim * (0.35 + 0.65 * facing ** 1.4) + rim2 * facing ** 3 * 0.35 + rim * back ** 2 * 0.45
-    out += spec[..., None] * 255 * style.spec
+    spec = rim * (0.35 + 0.65 * facing ** 1.4) + rim2 * facing ** 3 * 0.35
+    out += spec[..., None] * lit * style.spec
+    out += (rim * back ** 2 * 0.45)[..., None] * back_lit * style.spec
 
     out = np.clip(out, 0, 255).astype(np.uint8)
     rgba = np.dstack([out, (alpha * 255).astype(np.uint8)])

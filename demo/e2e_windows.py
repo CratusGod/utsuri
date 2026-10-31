@@ -676,6 +676,83 @@ def undo_and_check(outs, folder, before):
     return f"Undo removed {top.name}/"
 
 
+# ------------------------------------------------------------------ colour themes
+def set_theme_setting(name: str):
+    import subprocess
+    subprocess.run(["reg", "add", r"HKCU\Software\Utsuri\Utsuri", "/v", "theme", "/t", "REG_SZ", "/d", name, "/f"],
+                   capture_output=True)
+
+
+def theme_tour(app):
+    """Each theme: restart Utsuri with it, open the menu over a real drag, screenshot it.
+    Passes when every theme draws a different menu and the app logged no error."""
+    from utsuri import themes
+    if ONLY and not any(w in "theme tour" for w in ONLY):
+        return app
+    t0 = time.time()
+    looks, status, msg = {}, "PASS", ""
+    log_before = len(_app_log())
+    try:
+        for name in themes.names():
+            set_theme_setting(name)
+            wk.stop_app(app)
+            app = wk.start_app()
+            time.sleep(4.5)
+            EX.set_focus()
+            time.sleep(0.5)
+            src = wk.item_center(EX, "Photo.jpg")
+            c = wk.drag_open_menu(src, (min(640, pyautogui.size()[0] - src[0] - 260), 60))
+            time.sleep(0.9)  # the liquid glass renders while the menu pops in
+            box = (c[0] - 200, c[1] - 200, c[0] + 200, c[1] + 200)
+            from PIL import ImageGrab
+            im = ImageGrab.grab(bbox=box)
+            im.save(OUT / "shots" / f"theme_{safe(name)}.png")
+            pyautogui.press("esc")
+            pyautogui.mouseUp()
+            pyautogui.keyUp("shift")
+            time.sleep(0.8)
+            looks[name] = im.convert("RGB").resize((24, 24))
+        # Every theme must clearly change the menu; themes whose palettes are alike
+        # (the green ones) may look close to each other, but never the same.
+        names = list(looks)
+        from_default = {n: _image_distance(looks[themes.DEFAULT], looks[n]) for n in names[1:]}
+        weak = [n for n, d in from_default.items() if d < 2.0]
+        assert not weak, f"barely differs from Default: {weak}"
+        pairs = {(a, b): _image_distance(looks[a], looks[b]) for i, a in enumerate(names) for b in names[i + 1:]}
+        same = [p for p, d in pairs.items() if d < 0.3]
+        assert not same, f"these look identical: {same}"
+        errors = [ln for ln in _app_log()[log_before:] if "Unhandled" in ln or "Traceback" in ln]
+        assert not errors, errors[0]
+        (a, b), d = min(pairs.items(), key=lambda kv: kv[1])
+        msg = f"{len(looks)} themes, all distinct (closest: {a} / {b}, {d:.1f}) · shots/theme_*.png"
+    except Exception as e:
+        status, msg = "FAIL", f"{type(e).__name__}: {e}"
+        wk.log(traceback.format_exc())
+        pyautogui.mouseUp()
+        pyautogui.keyUp("shift")
+    finally:
+        set_theme_setting(themes.DEFAULT)
+    dt = time.time() - t0
+    RESULTS.append({"name": "Colour themes", "where": "explorer", "status": status, "detail": msg,
+                    "seconds": round(dt, 1), "t": round(time.time() - wk.T0, 1)})
+    wk.log(f"{status:4} explorer {'Colour themes':34} {dt:5.1f}s  {msg}")
+    return app
+
+
+def _app_log() -> list[str]:
+    p = Path(os.environ.get("LOCALAPPDATA", "")) / "Utsuri" / "log.txt"
+    try:
+        return p.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return []
+
+
+def _image_distance(a, b) -> float:
+    """Mean absolute difference per channel (0-255) of two small RGB images."""
+    pa, pb = a.getdata(), b.getdata()
+    return sum(abs(x - y) for p, q in zip(pa, pb) for x, y in zip(p, q)) / (len(pa) * 3)
+
+
 # ------------------------------------------------------------------ IPC / Send To path
 def run_ipc(name: str, file: str, label: str, verify):
     """Launch a second copy with a file (what 'Send to' / right-click does) → menu → click."""
@@ -813,6 +890,12 @@ def main():
         run("Desktop: Extract, then Undo", "desktop", ["D-Bundle.zip"], "More", "Extract", v_extracted,
             after=undo_and_check)
         run("Desktop: Video → GIF", "desktop", ["D-Clip.mp4"], "Convert", "GIF", v_gif)
+        # ---- every colour theme, on the real menu
+        if DESKTOP_SHOWN[0]:
+            EX.set_focus()
+            DESKTOP_SHOWN[0] = False
+            time.sleep(0.6)
+        app = theme_tour(app)
     except Exception:
         wk.log("E2E ABORTED\n" + traceback.format_exc())
     finally:

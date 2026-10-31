@@ -423,7 +423,8 @@ class RadialMenu(QWidget):
     def _text_colors(self) -> tuple[QColor, QColor, QColor]:
         if self.is_light:
             return QColor(28, 20, 44), QColor(28, 20, 44, 170), QColor(255, 255, 255, 120)
-        return QColor(255, 255, 255), QColor(255, 255, 255, 190), QColor(0, 0, 0, 110)
+        r, g, b = themes.label_rgb()
+        return QColor(r, g, b), QColor(r, g, b, 190), QColor(0, 0, 0, 110)
 
     def paintEvent(self, e):
         p = QPainter(self)

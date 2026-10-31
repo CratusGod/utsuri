@@ -89,10 +89,31 @@ def tint(r: int, g: int, b: int, a: int) -> QColor:
 
 
 def liquid_tint() -> tuple[int, int, int, float]:
-    """The liquid renderer's tint on dark backdrops."""
+    """The liquid renderer's tint on dark backdrops. Mostly the theme's surface, with
+    enough of its accent that the glass itself shows which theme is on."""
     if _current.name == DEFAULT:
         return (18, 14, 30, 0.26)
-    return (*_rgb(_current.surface), 0.30)
+    s, a = _rgb(_current.surface), _rgb(_current.accent_a)
+    r, g, b = (round(x + (y - x) * ACCENT_MIX) for x, y in zip(s, a))
+    return (r, g, b, 0.36)
+
+
+ACCENT_MIX = 0.38  # how much of the accent goes into the glass tint
+
+
+def rim_colors() -> tuple[tuple[int, int, int], tuple[int, int, int]]:
+    """The liquid glass's edge light: (side facing the light, far side). White by
+    default; a theme lights its edges with its accent and secondary colours."""
+    if _current.name == DEFAULT:
+        return (255, 255, 255), (255, 255, 255)
+    a, b = _rgb(_current.accent_a), _rgb(_current.accent_b)
+    lit = tuple(round(255 + (x - 255) * 0.55) for x in a)
+    return lit, b
+
+
+def label_rgb() -> tuple[int, int, int]:
+    """Menu label colour on dark glass: white by default, the theme's text colour otherwise."""
+    return (255, 255, 255) if _current.name == DEFAULT else _rgb(_current.text)
 
 
 def contrast(fg: str, bg: str) -> float:
