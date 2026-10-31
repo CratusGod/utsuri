@@ -22,7 +22,6 @@ from .trigger import UtsuriWatcher
 from .util import UserError, category, file_size, human_size, keep, release
 
 APP_NAME = "Utsuri"
-TIP_URL = "https://cash.app/$AtikaKadesha"
 VERSION = __version__
 IS_WIN = sys.platform == "win32"
 IS_MAC = sys.platform == "darwin"
@@ -168,7 +167,6 @@ class UtsuriApp(QObject):
         m.addSeparator()
         m.addAction("Settings…", self.open_settings)
         m.addAction("How to use", self.show_welcome)
-        m.addAction("Tip the developer ♥", lambda: QDesktopServices.openUrl(QUrl(TIP_URL)))
         m.addSeparator()
         m.addAction(f"Quit {APP_NAME}", self.qapp.quit)
         self.tray_menu = m
