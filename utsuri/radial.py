@@ -65,6 +65,7 @@ class _RenderJob(QRunnable):
     def __init__(self, serial: int, n: int, backdrop):
         super().__init__()
         self.serial, self.n, self.backdrop = serial, n, backdrop
+        self.colors = themes.liquid_colors()  # read here, on the GUI thread
         self.sig = _RenderSig()
 
     def run(self):
@@ -76,7 +77,7 @@ class _RenderJob(QRunnable):
                 a0, a1 = angles(self.n, i)
                 fields.append(liquid.sdf_ring_sector(SIZE, SIZE, c, c, R_IN, R_OUT, a0, a1, CORNER))
             sdf = liquid.union(*fields)
-            img, light = liquid.render(self.backdrop, sdf, liquid.GlassStyle())
+            img, light = liquid.render(self.backdrop, sdf, liquid.GlassStyle(), **self.colors)
             sh = liquid.shadow(sdf, spread=26, opacity=0.42 if light else 0.30, offset=(0, 8))
             sh.alpha_composite(img)
             try:

@@ -99,9 +99,16 @@ def luminance(rgb: np.ndarray, mask: np.ndarray | None = None) -> float:
     return float(l.mean())
 
 
+WHITE = (255, 255, 255)
+
+
 def render(backdrop: Image.Image, sdf: np.ndarray, style: GlassStyle = GlassStyle(),
-           tint: tuple[int, int, int, float] | None = None) -> tuple[Image.Image, bool]:
-    """Return (RGBA glass image, is_light). `backdrop` must match sdf's size."""
+           tint: tuple[int, int, int, float] | None = None,
+           dark_tint: tuple[int, int, int, float] = (18, 14, 30, 0.26),
+           rim: tuple[tuple[int, int, int], tuple[int, int, int]] = (WHITE, WHITE)) -> tuple[Image.Image, bool]:
+    """Return (RGBA glass image, is_light). `backdrop` must match sdf's size.
+    dark_tint and rim (edge light: facing side, far side) come from the colour theme;
+    callers read them on the GUI thread, since this runs on worker threads."""
     h, w = sdf.shape
     bg = backdrop.convert("RGB").resize((w, h)) if backdrop.size != (w, h) else backdrop.convert("RGB")
     soft = bg.filter(ImageFilter.GaussianBlur(style.blur)) if style.blur > 0 else bg
@@ -131,10 +138,9 @@ def render(backdrop: Image.Image, sdf: np.ndarray, style: GlassStyle = GlassStyl
     is_light = luminance(np.asarray(bg, np.float32), alpha) > 0.62
 
     # adaptive tint keeps text legible on any wallpaper
-    from .themes import liquid_tint, rim_colors
     if tint is None:
-        tint = (236, 232, 246, 0.14) if is_light else liquid_tint()
-    lit, back_lit = (np.array(c, np.float32) for c in rim_colors())  # white, or the theme's colours
+        tint = (236, 232, 246, 0.14) if is_light else dark_tint
+    lit, back_lit = (np.array(c, np.float32) for c in rim)
     tr, tg, tb, ta = tint
     out = out * (1 - ta) + np.array([tr, tg, tb], np.float32) * ta
 

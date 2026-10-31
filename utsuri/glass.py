@@ -269,6 +269,7 @@ class _LiquidJob(QRunnable):
     def __init__(self, serial, backdrop, w, h, radius, style):
         super().__init__()
         self.args = (serial, backdrop, w, h, radius, style)
+        self.colors = themes.liquid_colors()  # read here, on the GUI thread
         self.sig = _LiquidSig()
 
     def run(self):
@@ -276,7 +277,7 @@ class _LiquidJob(QRunnable):
         try:
             from . import liquid
             sdf = liquid.sdf_rounded_rect(w, h, 0.5, 0.5, w - 0.5, h - 0.5, radius)
-            img, light = liquid.render(backdrop, sdf, style)
+            img, light = liquid.render(backdrop, sdf, style, **self.colors)
             try:
                 self.sig.done.emit(serial, qimage_from_pil(img), light)
             except RuntimeError:

@@ -66,19 +66,27 @@ def test_liquid_glass_default_is_unchanged_and_themes_colour_it():
     from utsuri import liquid
     bg = Image.new("RGB", (80, 80), (40, 90, 120))
     sdf = liquid.sdf_circle(80, 80, 40, 40, 30)
-    default, _ = liquid.render(bg, sdf, liquid.GlassStyle(), )
-    assert themes.rim_colors() == ((255, 255, 255), (255, 255, 255))
+    plain, _ = liquid.render(bg, sdf, liquid.GlassStyle())
+    default, _ = liquid.render(bg, sdf, liquid.GlassStyle(), **themes.liquid_colors())
+    assert default.tobytes() == plain.tobytes(), "Default must render exactly as before themes"
     looks = {}
     for name in themes.names()[1:]:
         themes.set_theme(name)
-        img, _ = liquid.render(bg, sdf, liquid.GlassStyle())
+        img, _ = liquid.render(bg, sdf, liquid.GlassStyle(), **themes.liquid_colors())
         looks[name] = img.tobytes()
         assert looks[name] != default.tobytes()
     assert len(set(looks.values())) == len(looks)
 
 
-def test_worker_thread_helpers_never_touch_qt(monkeypatch):
-    """liquid.render runs on worker threads: its theme helpers must not build Qt objects."""
+def test_liquid_render_never_reads_the_theme():
+    """liquid.render runs on worker threads: it gets its colours as arguments."""
+    import inspect
+    from utsuri import liquid
+    assert "themes" not in inspect.getsource(liquid)
+
+
+def test_theme_colour_helpers_never_touch_qt(monkeypatch):
+    """liquid_colors() and friends are plain Python (no QColor)."""
     def boom(*a, **k):
         raise AssertionError("QColor made off the GUI thread")
     monkeypatch.setattr(themes, "QColor", boom)

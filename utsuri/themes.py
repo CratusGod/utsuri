@@ -113,6 +113,12 @@ def rim_colors() -> tuple[tuple[int, int, int], tuple[int, int, int]]:
     return lit, b
 
 
+def liquid_colors() -> dict:
+    """liquid.render's theme arguments. Read on the GUI thread and handed to the
+    render job: the job runs on a worker thread and must not look anything up."""
+    return {"dark_tint": liquid_tint(), "rim": rim_colors()}
+
+
 def label_rgb() -> tuple[int, int, int]:
     """Menu label colour on dark glass: white by default, the theme's text colour otherwise."""
     return (255, 255, 255) if _current.name == DEFAULT else _rgb(_current.text)
