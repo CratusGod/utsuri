@@ -76,8 +76,10 @@ def set_theme(name: str) -> Theme:
 
 
 def _rgb(hex_color: str) -> tuple[int, int, int]:
-    c = QColor(hex_color)
-    return c.red(), c.green(), c.blue()
+    """"#rrggbb" -> (r, g, b), in plain Python: liquid.render calls this from worker
+    threads, where Qt objects (even a QColor) must not be made (it crashed on macOS)."""
+    h = hex_color.lstrip("#")
+    return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
 
 
 def tint(r: int, g: int, b: int, a: int) -> QColor:

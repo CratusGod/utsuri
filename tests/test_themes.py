@@ -77,6 +77,18 @@ def test_liquid_glass_default_is_unchanged_and_themes_colour_it():
     assert len(set(looks.values())) == len(looks)
 
 
+def test_worker_thread_helpers_never_touch_qt(monkeypatch):
+    """liquid.render runs on worker threads: its theme helpers must not build Qt objects."""
+    def boom(*a, **k):
+        raise AssertionError("QColor made off the GUI thread")
+    monkeypatch.setattr(themes, "QColor", boom)
+    for name in themes.names():
+        themes.set_theme(name)
+        themes.liquid_tint()
+        themes.rim_colors()
+        themes.label_rgb()
+
+
 def test_unknown_theme_name_falls_back_to_default():
     assert themes.set_theme("No Such Theme").name == themes.DEFAULT
 
