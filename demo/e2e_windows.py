@@ -87,6 +87,7 @@ def make_files(folder: Path, prefix=""):
         z.write(folder / f"{prefix}Graphic.png", "Bundle/Graphic.png")
     make_sign(folder / f"{prefix}Sign.png")
     make_clip(folder / f"{prefix}Clip.mp4")
+    make_photo(folder / f"{prefix}Ảnh chụp.jpg", size=(900, 600), gps=False)  # a Vietnamese file name
 
 
 def make_sign(path: Path):
@@ -158,7 +159,7 @@ def stash(folder: Path, before: set[str]):
 
 
 SOURCES = ["Photo.jpg", "Second.jpg", "Graphic.png", "Report.pdf", "Appendix.pdf", "Letter.docx", "Notes.txt",
-           "Bundle.zip", "Sign.png", "Clip.mp4"]
+           "Bundle.zip", "Sign.png", "Clip.mp4", "Ảnh chụp.jpg"]
 
 
 def restore_sources(folder: Path):
@@ -223,7 +224,10 @@ def run(name: str, where: str, files: list[str], ring: str, label: str, verify, 
     t0 = time.time()
     status, msg = "PASS", ""
     try:
-        ring_i, idx, n = ring_index(srcs, ring, label)
+        # Explorer hands over the dragged file (the last one clicked) first, and the menu's
+        # rings follow the first file's kind
+        order = [srcs[-1], *srcs[:-1]] if select_extra else srcs
+        ring_i, idx, n = ring_index(order, ring, label)
         container = EX if where == "explorer" else wk.desktop_view()
         if where == "desktop":
             pyautogui.hotkey("win", "d") if not DESKTOP_SHOWN[0] else None
@@ -661,6 +665,36 @@ def v_extracted(outs, srcs):
     return f"extracted {', '.join(names)} into {outs[0].parent.name}/"
 
 
+def v_zip_many(names):
+    def v(outs, srcs):
+        z = [o for o in outs if o.suffix.lower() == ".zip"]
+        assert z, "no zip"
+        with zipfile.ZipFile(z[0]) as f:
+            got = sorted(f.namelist())
+        assert got == sorted(names), got
+        return f"{z[0].name} holds {', '.join(got)}"
+    return v
+
+
+def undo_file_and_check(outs, folder, before):
+    """Press Undo on the newest result card; the new file must go to the Recycle Bin."""
+    end = time.time() + 6
+    cards = []
+    while time.time() < end and not cards:
+        cards = wk.toast_rects()
+        time.sleep(0.3)
+    assert cards, "no result card on screen"
+    time.sleep(0.6)
+    wk.glide(*wk.toast_button_xy(cards[0], "Undo"), 0.4)
+    time.sleep(0.2)
+    pyautogui.click()
+    end = time.time() + 8
+    while time.time() < end and any(o.exists() for o in outs):
+        time.sleep(0.3)
+    assert not any(o.exists() for o in outs), f"{[o.name for o in outs if o.exists()]} still there after Undo"
+    return f"Undo removed {', '.join(o.name for o in outs)}"
+
+
 def undo_and_check(outs, folder, before):
     """Press Undo on the newest result card; the extracted folder must go to the Recycle Bin."""
     top = folder / outs[0].relative_to(folder).parts[0]
@@ -876,6 +910,12 @@ def main():
         run("Pack: TAR.GZ", "explorer", ["Notes.txt"], "Pack", "TAR.GZ", v_tar)
         run("Extract archive, then Undo", "explorer", ["Bundle.zip"], "More", "Extract", v_extracted,
             after=undo_and_check)
+        # ---- names and selections people really have
+        run("Vietnamese name: JPG → PNG", "explorer", ["Ảnh chụp.jpg"], "Convert", "PNG", v_format("PNG", ".png"))
+        run("3 files → one ZIP", "explorer", ["Notes.txt", "Letter.docx", "Graphic.png"], "Pack", "ZIP",
+            v_zip_many(["Notes.txt", "Letter.docx", "Graphic.png"]), select_extra=True)
+        run("Convert, then Undo", "explorer", ["Second.jpg"], "Convert", "WEBP", v_format("WEBP", ".webp"),
+            after=undo_file_and_check)
         # ---- video and audio (system ffmpeg)
         run("Video → GIF", "explorer", ["Clip.mp4"], "Convert", "GIF", v_gif)
         run("Video → WEBM", "explorer", ["Clip.mp4"], "Convert", "WEBM", v_media(".webm", "Video"))
