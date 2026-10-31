@@ -4,6 +4,7 @@ and the end-to-end test on GitHub's Windows machines."""
 from __future__ import annotations
 
 import ctypes
+import ctypes.wintypes
 import math
 import os
 import subprocess
@@ -79,16 +80,19 @@ def set_resolution(w: int, h: int):
         log("ChangeDisplaySettings ->", user32.ChangeDisplaySettingsW(ctypes.byref(dm), 0))
 
 
-def prepare_desktop(wallpaper_colors=("#ffb36b", "#ff5f6d", "#c2508f", "#7b8cff")):
-    from utsuri.imaging import gradient
-    set_resolution(1920, 1080)
-    time.sleep(1)
-    p = Path(os.environ.get("TEMP", r"C:\Temp")) / "utsuri_wall.bmp"
-    gradient((1920, 1080), list(wallpaper_colors), 160).save(p)
-    user32.SystemParametersInfoW(20, 0, str(p), 3)
-    subprocess.run(["taskkill", "/F", "/IM", "ServerManager.exe"], capture_output=True)
-    adv = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
-    subprocess.run(["reg", "add", adv, "/v", "HideFileExt", "/t", "REG_DWORD", "/d", "0", "/f"], capture_output=True)
+def prepare_desktop(wallpaper_colors=("#ffb36b", "#ff5f6d", "#c2508f", "#7b8cff"), local=False):
+    """local=True is for someone's own PC: leave the resolution, wallpaper and Explorer settings alone."""
+    if not local:
+        from utsuri.imaging import gradient
+        set_resolution(1920, 1080)
+        time.sleep(1)
+        p = Path(os.environ.get("TEMP", r"C:\Temp")) / "utsuri_wall.bmp"
+        gradient((1920, 1080), list(wallpaper_colors), 160).save(p)
+        user32.SystemParametersInfoW(20, 0, str(p), 3)
+        subprocess.run(["taskkill", "/F", "/IM", "ServerManager.exe"], capture_output=True)
+        adv = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
+        subprocess.run(["reg", "add", adv, "/v", "HideFileExt", "/t", "REG_DWORD", "/d", "0", "/f"],
+                       capture_output=True)
     # Utsuri: skip the welcome window
     subprocess.run(["reg", "add", r"HKCU\Software\Utsuri\Utsuri", "/v", "welcomed", "/t", "REG_SZ",
                     "/d", "true", "/f"], capture_output=True)
@@ -136,6 +140,15 @@ def start_app(extra_env: dict | None = None) -> subprocess.Popen:
     pyw = Path(sys.executable).with_name("pythonw.exe")
     return subprocess.Popen([str(pyw if pyw.exists() else sys.executable), "-m", "utsuri", "--quiet"],
                             cwd=str(ROOT), env=env)
+
+
+def stop_app(p: subprocess.Popen):
+    """Kill the app and its children: in a venv pythonw.exe is a launcher that starts the real one."""
+    subprocess.run(["taskkill", "/F", "/T", "/PID", str(p.pid)], capture_output=True)
+    try:
+        p.wait(timeout=10)
+    except Exception:
+        pass
 
 
 def start_recording(out: Path) -> subprocess.Popen:
@@ -188,7 +201,18 @@ def window_gone(title_re: str, timeout=10) -> bool:
     return False
 
 
+def close_explorer(folder: Path):
+    """Close File Explorer windows left on this folder (by an earlier run)."""
+    try:
+        for w in uia().windows(title_re=f".*{folder.name}.*", class_name="CabinetWClass"):
+            w.close()
+    except Exception as e:
+        log("closing old Explorer windows failed", e)
+    time.sleep(0.5)
+
+
 def open_explorer(folder: Path, rect=(0.03, 0.07, 0.40, 0.72)):
+    close_explorer(folder)
     subprocess.Popen(["explorer", str(folder)])
     ex = find_window(f".*{folder.name}.*", 20)
     ex.set_focus()
@@ -276,12 +300,55 @@ def menu_center(cur, size=400):
 
 
 def switch_ring(key="shift"):
+    """One Shift tap. The menu only flips while a file drag is over it, so keep the drag
+    moving a little first (a hand is never perfectly still)."""
     pyautogui.keyUp(key)
-    time.sleep(0.25)
+    cur = pyautogui.position()
+    for dx in (2, 0):
+        pyautogui.moveTo(cur[0] + dx, cur[1] + dx)
+        time.sleep(0.08)
+    time.sleep(0.2)
     pyautogui.keyDown(key)
     time.sleep(0.12)
     pyautogui.keyUp(key)
     time.sleep(0.45)
+
+
+def toast_rects() -> list[tuple[int, int, int, int]]:
+    """Screen rectangles of Utsuri's result cards (toasts.W x toasts.H windows), newest first."""
+    from utsuri import toasts
+    found = []
+
+    @ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+    def each(hwnd, _):
+        if user32.IsWindowVisible(hwnd):
+            r = ctypes.wintypes.RECT()
+            user32.GetWindowRect(hwnd, ctypes.byref(r))
+            if (r.right - r.left, r.bottom - r.top) == (toasts.W, toasts.H):
+                found.append((r.left, r.top, r.right, r.bottom))
+        return True
+    user32.EnumWindows(each, 0)
+    return sorted(found, key=lambda r: r[1])  # the stack grows upwards: the newest is highest
+
+
+def toast_button_xy(card: tuple[int, int, int, int], name: str) -> tuple[int, int]:
+    """Where toasts.ToastCard paints its Open / Show in folder / Undo pills."""
+    from PySide6.QtGui import QFont, QFontMetrics, QGuiApplication
+    from utsuri import toasts
+    from utsuri.util import ui_family
+    if QGuiApplication.instance() is None:
+        toast_button_xy.app = QGuiApplication([])
+    f = QFont(ui_family(True))
+    f.setPixelSize(12)
+    f.setBold(True)
+    fm = QFontMetrics(f)
+    x = 82
+    for label, key in (("Open", "Open"), ("Show in folder", "Show"), ("Undo", "Undo")):
+        bw = fm.horizontalAdvance(label) + 22
+        if key == name:
+            return card[0] + x + bw // 2, card[1] + toasts.H - 32 + 11
+        x += bw + 6
+    raise ValueError(name)
 
 
 def drop(key="shift"):

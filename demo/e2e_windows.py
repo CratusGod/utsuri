@@ -6,9 +6,11 @@ Writes e2e_out/results.json, results.md, log.txt, screenshots and a screen recor
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import time
 import traceback
+import zipfile
 from pathlib import Path
 
 import pyautogui
@@ -24,6 +26,13 @@ EXP = Path(r"C:\UtsuriTest")
 DESK = wk.desktop_dir()
 STASH = Path(r"C:\UtsuriTest_outputs")
 RESULTS: list[dict] = []
+# UTSURI_E2E_LOCAL=1: running on someone's own PC. Keep their screen settings, and never delete a
+# Desktop file that was there before the run. UTSURI_E2E_ONLY=a,b runs only scenarios whose name
+# contains one of those words.
+LOCAL = os.environ.get("UTSURI_E2E_LOCAL") == "1"
+ONLY = [w.strip().lower() for w in os.environ.get("UTSURI_E2E_ONLY", "").split(",") if w.strip()]
+DESK_BEFORE: set[str] = set()
+VI_TEXT = "Bản nháp – Tài liệu mật"
 
 
 # ------------------------------------------------------------------ sample files
@@ -73,6 +82,34 @@ def make_files(folder: Path, prefix=""):
     d.add_paragraph("Hello from the Utsuri end-to-end test.")
     d.save(folder / f"{prefix}Letter.docx")
     (folder / f"{prefix}Notes.txt").write_text("Shopping list\n- coffee\n- limes\n", encoding="utf-8")
+    with zipfile.ZipFile(folder / f"{prefix}Bundle.zip", "w") as z:
+        z.writestr("Bundle/readme.txt", "inside the archive\n")
+        z.write(folder / f"{prefix}Graphic.png", "Bundle/Graphic.png")
+    make_sign(folder / f"{prefix}Sign.png")
+    make_clip(folder / f"{prefix}Clip.mp4")
+
+
+def make_sign(path: Path):
+    """Big dark words on white: something Tesseract reads reliably. Not too wide, so Explorer's
+    thumbnail fills the icon and a press at the icon's centre lands on the file."""
+    from PIL import ImageFont
+    im = Image.new("RGB", (1000, 800), "white")
+    font = ImageFont.load_default(size=130)
+    d = ImageDraw.Draw(im)
+    d.text((70, 220), "UTSURI", fill="black", font=font)
+    d.text((70, 430), "2026", fill="black", font=font)
+    im.save(path)
+
+
+def make_clip(path: Path):
+    """3 s of test pattern with a tone, so every video target (GIF, WEBM, MP3) has input."""
+    import subprocess
+    import imageio_ffmpeg
+    subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(), "-loglevel", "error", "-y",
+                    "-f", "lavfi", "-i", "testsrc=duration=3:size=640x360:rate=24",
+                    "-f", "lavfi", "-i", "sine=frequency=440:duration=3",
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", str(path)],
+                   check=True, capture_output=True)
 
 
 def snapshot(folder: Path) -> set[str]:
@@ -85,8 +122,8 @@ def new_files(folder: Path, before: set[str], timeout=15) -> list[Path]:
 
     def current():
         now = snapshot(folder) - before
-        return {n: (folder / n).stat().st_size for n in now
-                if (folder / n).is_file() and not Path(n).name.startswith(".~")}
+        return {n: (folder / n).stat().st_size for n in now   # not Utsuri's in-progress temp files
+                if (folder / n).is_file() and not Path(n).name.startswith((".~", ".utsuri-"))}
     while time.time() < end:
         a = current()
         if a:
@@ -113,7 +150,8 @@ def stash(folder: Path, before: set[str]):
             pass
 
 
-SOURCES = ["Photo.jpg", "Second.jpg", "Graphic.png", "Report.pdf", "Appendix.pdf", "Letter.docx", "Notes.txt"]
+SOURCES = ["Photo.jpg", "Second.jpg", "Graphic.png", "Report.pdf", "Appendix.pdf", "Letter.docx", "Notes.txt",
+           "Bundle.zip", "Sign.png", "Clip.mp4"]
 
 
 def restore_sources(folder: Path):
@@ -125,13 +163,13 @@ def restore_sources(folder: Path):
         wk.log("restoring sources:", missing)
         for n in missing:
             stray = DESK / (prefix + n) if folder == EXP else None
-            if stray is not None and stray.exists():
+            if stray is not None and stray.exists() and stray.name not in DESK_BEFORE:
                 stray.unlink()
         make_files(folder, prefix)
         time.sleep(1.0)
-    # stray copies of Explorer files dropped on the desktop
+    # stray copies of Explorer files dropped on the desktop (never one that was there before the run)
     for n in SOURCES:
-        if (DESK / n).exists():
+        if (DESK / n).exists() and n not in DESK_BEFORE:
             (DESK / n).unlink()
 
 
@@ -165,7 +203,12 @@ def safe(name: str) -> str:
     return "".join(c if c.isalnum() or c in "-_ ." else "_" for c in name).replace(" ", "_")
 
 
-def run(name: str, where: str, files: list[str], ring: str, label: str, verify, tool=None, select_extra=None):
+def run(name: str, where: str, files: list[str], ring: str, label: str, verify, tool=None, select_extra=None,
+        expect_files=True, after=None):
+    """expect_files=False: the slice makes no file (Copy), so verify gets []. after(outs) runs once the
+    outputs are checked, e.g. to press Undo, and may add to the note."""
+    if ONLY and not any(w in name.lower() for w in ONLY):
+        return
     folder = EXP if where == "explorer" else DESK
     srcs = [str(folder / f) for f in files]
     restore_sources(folder)
@@ -201,7 +244,7 @@ def run(name: str, where: str, files: list[str], ring: str, label: str, verify, 
         dy = 260 if src_xy[1] < 300 else (60 if src_xy[1] < sh - 400 else -260)
         nudge = (min(640, sw - src_xy[0] - 260), dy)
         c = wk.drag_open_menu(src_xy, nudge)
-        if ring_i == 1:
+        for _ in range(ring_i):  # each Shift tap moves to the next ring
             wk.switch_ring()
         target = wk.petal_xy(c, n, idx)
         wk.glide(*target, 0.4)
@@ -210,11 +253,17 @@ def run(name: str, where: str, files: list[str], ring: str, label: str, verify, 
         wk.drop()
         if tool:
             tool()
-        outs = new_files(folder, before)
-        if not outs:
-            raise AssertionError("no output file appeared")
+        if expect_files:
+            outs = new_files(folder, before)
+            if not outs:
+                raise AssertionError("no output file appeared")
+        else:
+            time.sleep(2.5)
+            outs = []
         note = verify(outs, srcs)
         msg = note or ", ".join(o.name for o in outs[:3])
+        if after:
+            msg = f"{msg} · {after(outs, folder, before)}"
     except Exception as e:
         status = "FAIL"
         msg = f"{type(e).__name__}: {e}"
@@ -480,9 +529,158 @@ def v_combined(outs, srcs):
     return f"{len(srcs)} images → {pdf_pages(outs[0])}-page PDF"
 
 
+def drive_watermark_vi():
+    w = tool_win("Watermark or stamp.*")
+    time.sleep(0.6)
+    box = next(e for e in w.descendants(control_type="Edit") if e.get_value() == "DRAFT")
+    box.set_edit_text(VI_TEXT)  # UIA ValuePattern: typing can't produce Vietnamese letters
+    time.sleep(0.8)              # the preview refreshes after 150 ms
+    wk.shot(OUT / "shots" / f"{len(RESULTS) + 1:02d}_watermark_preview.png")
+    wk.click_title(w, "Apply")
+
+
+def v_watermark_vi(outs, srcs):
+    """pdfkit draws the watermark as a faded image (viewers ignore PDF text opacity), so: one
+    more image on every page, and every letter drawn by a font that really has it."""
+    import pymupdf
+    from utsuri import pdfkit
+    pdfs = [o for o in outs if o.suffix.lower() == ".pdf"]
+    assert pdfs, "no PDF"
+    with pymupdf.open(srcs[0]) as a, pymupdf.open(pdfs[0]) as b:
+        added = [len(pb.get_images()) - len(pa.get_images()) for pa, pb in zip(a, b)]
+        b[0].get_pixmap(dpi=60).save(OUT / "shots" / f"{len(RESULTS) + 1:02d}_watermark_page1.png")
+    assert added and all(n == 1 for n in added), f"images added per page: {added}"
+    # Helvetica has á/à/–; letters like ả/ệ/ậ need the system font fallback
+    fonts = sorted({f.name for t, f in pdfkit._runs(VI_TEXT, 72) if any(ord(c) > 0xFF and c != "–" for c in t)})
+    assert fonts and "Helvetica" not in fonts, f"Vietnamese letters drawn with {fonts}"
+    return f"{pdfs[0].name} · on all {len(added)} pages · Vietnamese letters from {', '.join(fonts)}"
+
+
+def v_zip(outs, srcs):
+    z = [o for o in outs if o.suffix.lower() == ".zip"]
+    assert z, "no zip"
+    with zipfile.ZipFile(z[0]) as f:
+        names = f.namelist()
+    assert Path(srcs[0]).name in names, names
+    return f"{z[0].name} holds {', '.join(names)}"
+
+
+def v_tar(outs, srcs):
+    import tarfile
+    t = [o for o in outs if o.name.endswith(".tar.gz")]
+    assert t, "no .tar.gz"
+    with tarfile.open(t[0]) as f:
+        names = f.getnames()
+    assert Path(srcs[0]).name in names, names
+    return f"{t[0].name} holds {', '.join(names)}"
+
+
+def v_long_side(n):
+    def v(outs, srcs):
+        size = img_ok(outs[0])
+        assert max(size) == n, f"{size}"
+        return f"{outs[0].name} · {size[0]}×{size[1]}"
+    return v
+
+
+def v_gray_pdf(outs, srcs):
+    import pymupdf
+    with pymupdf.open(outs[0]) as d:
+        pix = d[0].get_pixmap(dpi=40)
+    assert pix.n < 3 or _is_gray(pix), "page still has colour"
+    return f"{outs[0].name} · grayscale"
+
+
+def _is_gray(pix) -> bool:
+    s = pix.samples
+    return all(abs(s[i] - s[i + 1]) < 8 and abs(s[i + 1] - s[i + 2]) < 8 for i in range(0, len(s), pix.n * 97))
+
+
+def clipboard_text() -> str:
+    import tkinter
+    r = tkinter.Tk()
+    r.withdraw()
+    try:
+        return r.clipboard_get()
+    finally:
+        r.destroy()
+
+
+def v_clipboard_image(outs, srcs):
+    from PIL import ImageGrab
+    for _ in range(10):
+        im = ImageGrab.grabclipboard()
+        if isinstance(im, Image.Image):
+            break
+        time.sleep(0.5)
+    assert isinstance(im, Image.Image), f"clipboard holds {type(im).__name__}"
+    with Image.open(srcs[0]) as a:
+        assert im.size == a.size, f"{im.size} != {a.size}"
+    return f"clipboard image {im.size[0]}×{im.size[1]}"
+
+
+def v_ocr(outs, srcs):
+    txt = [o for o in outs if o.suffix.lower() == ".txt"]
+    assert txt, "no text file"
+    got = txt[0].read_text(encoding="utf-8")
+    assert "UTSURI" in got.upper(), f"read {got!r}"
+    clip = clipboard_text()
+    assert "UTSURI" in clip.upper(), f"clipboard {clip!r}"
+    return f"{txt[0].name}: {got.strip()!r}, also on the clipboard"
+
+
+def v_gif(outs, srcs):
+    with Image.open(outs[0]) as im:
+        assert im.format == "GIF" and getattr(im, "n_frames", 1) > 5, f"{im.format} {getattr(im, 'n_frames', 1)}"
+        return f"{outs[0].name} · {im.n_frames} frames · {im.size[0]}×{im.size[1]}"
+
+
+def v_media(ext, codec_type):
+    def v(outs, srcs):
+        import subprocess
+        import imageio_ffmpeg
+        o = outs[0]
+        assert o.suffix.lower() == ext, o.name
+        r = subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(), "-hide_banner", "-i", str(o)],
+                           capture_output=True, text=True, errors="replace")
+        assert f"{codec_type}:" in r.stderr, r.stderr[-300:]
+        return f"{o.name} · {o.stat().st_size // 1024} KB · has {codec_type.lower()}"
+    return v
+
+
+def v_extracted(outs, srcs):
+    names = sorted(o.name for o in outs)
+    assert names == ["Graphic.png", "readme.txt"], names
+    return f"extracted {', '.join(names)} into {outs[0].parent.name}/"
+
+
+def undo_and_check(outs, folder, before):
+    """Press Undo on the newest result card; the extracted folder must go to the Recycle Bin."""
+    top = folder / outs[0].relative_to(folder).parts[0]
+    end = time.time() + 6
+    cards = []
+    while time.time() < end and not cards:
+        cards = wk.toast_rects()
+        time.sleep(0.3)
+    assert cards, "no result card on screen"
+    time.sleep(0.6)  # the card turns from spinner to result
+    xy = wk.toast_button_xy(cards[0], "Undo")
+    wk.glide(*xy, 0.4)
+    time.sleep(0.2)
+    wk.shot(OUT / "shots" / f"{len(RESULTS) + 1:02d}_undo_card.png")
+    pyautogui.click()
+    end = time.time() + 8
+    while time.time() < end and top.exists():
+        time.sleep(0.3)
+    assert not top.exists(), f"{top.name} still there after Undo"
+    return f"Undo removed {top.name}/"
+
+
 # ------------------------------------------------------------------ IPC / Send To path
 def run_ipc(name: str, file: str, label: str, verify):
     """Launch a second copy with a file (what 'Send to' / right-click does) → menu → click."""
+    if ONLY and not any(w in name.lower() for w in ONLY):
+        return
     import subprocess
     import sys
     folder = EXP
@@ -525,9 +723,14 @@ DESKTOP_SHOWN = [False]
 def main():
     global EX
     wk.set_log(OUT / "log.txt")
-    wk.prepare_desktop()
+    DESK_BEFORE.update(p.name for p in DESK.iterdir())
+    wk.prepare_desktop(local=LOCAL)
     for f in DESK.glob("*"):
-        if f.is_file() and f.suffix.lower() in (".jpg", ".png", ".pdf", ".docx", ".txt"):
+        if LOCAL:  # only this script's own leftovers
+            if f.is_file() and f.name.startswith("D-") and f.name[2:] in SOURCES:
+                f.unlink()
+                DESK_BEFORE.discard(f.name)
+        elif f.is_file() and f.suffix.lower() in (".jpg", ".png", ".pdf", ".docx", ".txt"):
             f.unlink()
     shutil.rmtree(EXP, ignore_errors=True)
     shutil.rmtree(STASH, ignore_errors=True)
@@ -577,6 +780,23 @@ def main():
         run("PDF Metadata", "explorer", ["Report.pdf"], "Tools", "Metadata", v_pdf_meta, drive_meta_all)
         run("Merge 2 PDFs", "explorer", ["Appendix.pdf", "Report.pdf"], "Tools", "Merge", v_merged,
             select_extra=True)
+        # ---- the More and Pack rings
+        run("More: long side 1280", "explorer", ["Photo.jpg"], "More", "1280 px", v_long_side(1280))
+        run("More: no GPS", "explorer", ["Photo.jpg"], "More", "No GPS", v_no_gps_keep_camera)
+        run("More: Copy image", "explorer", ["Second.jpg"], "More", "Copy", v_clipboard_image, expect_files=False)
+        run("More: Text (OCR)", "explorer", ["Sign.png"], "More", "Text", v_ocr)
+        run("More: PDF Gray", "explorer", ["Report.pdf"], "More", "Gray", v_gray_pdf)
+        run("More: Stamp in Vietnamese", "explorer", ["Report.pdf"], "More", "Stamp", v_watermark_vi,
+            drive_watermark_vi)
+        run("Pack: ZIP", "explorer", ["Photo.jpg"], "Pack", "ZIP", v_zip)
+        run("Pack: TAR.GZ", "explorer", ["Notes.txt"], "Pack", "TAR.GZ", v_tar)
+        run("Extract archive, then Undo", "explorer", ["Bundle.zip"], "More", "Extract", v_extracted,
+            after=undo_and_check)
+        # ---- video and audio (system ffmpeg)
+        run("Video → GIF", "explorer", ["Clip.mp4"], "Convert", "GIF", v_gif)
+        run("Video → WEBM", "explorer", ["Clip.mp4"], "Convert", "WEBM", v_media(".webm", "Video"))
+        run("Video → MP3", "explorer", ["Clip.mp4"], "Convert", "MP3", v_media(".mp3", "Audio"))
+        run("Video Compress", "explorer", ["Clip.mp4"], "More", "Compress", v_media(".mp4", "Video"))
         # ---- second launch with a file (Send To / right-click path)
         run_ipc("Send To → PNG", "Photo.jpg", "PNG", v_format("PNG", ".png"))
         # ---- from the Desktop
@@ -589,6 +809,10 @@ def main():
             drive_addbg)
         run("Desktop: 2 PDFs merge", "desktop", ["D-Appendix.pdf", "D-Report.pdf"], "Tools", "Merge", v_merged,
             select_extra=True)
+        run("Desktop: Pack ZIP", "desktop", ["D-Photo.jpg"], "Pack", "ZIP", v_zip)
+        run("Desktop: Extract, then Undo", "desktop", ["D-Bundle.zip"], "More", "Extract", v_extracted,
+            after=undo_and_check)
+        run("Desktop: Video → GIF", "desktop", ["D-Clip.mp4"], "Convert", "GIF", v_gif)
     except Exception:
         wk.log("E2E ABORTED\n" + traceback.format_exc())
     finally:
@@ -596,7 +820,9 @@ def main():
         pyautogui.keyUp("shift")
         time.sleep(1)
         wk.stop_recording(rec)
-        app.kill()
+        wk.stop_app(app)
+        if LOCAL:
+            wk.close_explorer(EXP)
         wk.copy_app_log(OUT / "app_log.txt")
         try:  # the drag picture must never be baked into the glass
             log_text = (OUT / "app_log.txt").read_text(encoding="utf-8", errors="replace")
