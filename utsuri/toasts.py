@@ -43,10 +43,14 @@ def open_file(path: str | Path):
 
 
 def trash(paths: list[Path]) -> int:
+    from .cli import created_dirs  # folders Utsuri made (extract, batch): the only ones Undo may remove
+    ours = set(created_dirs())
     n = 0
     for p in paths:
         p = Path(p)
-        if p.is_file():
+        if p.is_dir() and not p.is_symlink() and str(p) in ours:
+            n += QFile.moveToTrash(str(p))
+        elif p.is_file():
             if QFile.moveToTrash(str(p)):
                 n += 1
             else:

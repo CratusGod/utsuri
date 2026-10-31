@@ -9,12 +9,12 @@ import traceback
 from pathlib import Path
 
 from PySide6.QtCore import QDir, QObject, QPointF, QRunnable, Qt, QThreadPool, QTimer, QUrl, Signal
-from PySide6.QtGui import (QAction, QColor, QCursor, QDesktopServices, QGuiApplication, QIcon, QPainter,
-                           QPixmap)
+from PySide6.QtGui import (QAction, QColor, QCursor, QDesktopServices, QGuiApplication, QIcon, QImage,
+                           QPainter, QPixmap)
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 from PySide6.QtWidgets import QApplication, QFileDialog, QMenu, QSystemTrayIcon, QWidget
 
-from . import __version__, convert, glass, imaging, report, tools
+from . import __version__, convert, glass, imaging, more, report, tools
 from .radial import Item, RadialMenu
 from .settings import Settings, SettingsWindow, WelcomeWindow, TRIGGERS
 from .toasts import ToastStack
@@ -54,6 +54,19 @@ class _Sig(QObject):
     failed = Signal(str)
 
 
+class _Clip(QObject):
+    """Clipboard writes from worker threads, delivered on the GUI thread (Qt's
+    clipboard is not thread-safe). Lives on the GUI thread; emit from anywhere."""
+    text = Signal(str)
+    image = Signal(str)
+
+    def __init__(self):
+        super().__init__()
+        clip = QGuiApplication.clipboard()
+        self.text.connect(clip.setText)
+        self.image.connect(lambda p: clip.setImage(QImage(p)))
+
+
 class Job(QRunnable):
     def __init__(self, action: str, srcs: list, fn, extra: str = ""):
         super().__init__()
@@ -63,8 +76,11 @@ class Job(QRunnable):
     def run(self):
         try:
             outs = self.fn() or []
-            self.sig.done.emit(report.summarize(self.action, self.srcs, outs, self.extra))
-        except UserError as e:
+            if isinstance(outs, report.Result):  # more.py jobs summarize themselves
+                self.sig.done.emit(outs)
+            else:
+                self.sig.done.emit(report.summarize(self.action, self.srcs, outs, self.extra))
+        except (UserError, *more.cli.USER_ERRORS, more.cli.Refusal) as e:
             self.sig.failed.emit(str(e))
         except Exception as e:  # noqa: BLE001
             traceback.print_exc()
@@ -232,9 +248,18 @@ class UtsuriApp(QObject):
         return human_size(file_size(paths[0]))
 
     def build_rings(self, paths: list[str]) -> dict[str, list[Item]]:
+        rings = self._upstream_rings(paths)
+        for name, items in more.rings(paths).items():
+            if name in rings:
+                rings[name] = rings[name] + items
+            else:
+                rings[name] = items
+        return rings or {"Unsupported": []}
+
+    def _upstream_rings(self, paths: list[str]) -> dict[str, list[Item]]:
         cat = category(paths[0])
         if cat is None:
-            return {"Unsupported": []}
+            return {}
         ext = Path(paths[0]).suffix
         same = [p for p in paths if category(p) == cat]
         convert_items = []
@@ -253,6 +278,8 @@ class UtsuriApp(QObject):
 
     # ------------------------------------------------------------ actions
     def run_item(self, item: Item, paths: list[str]):
+        if item.key.split(":", 1)[0] in ("x", "xc", "xw"):
+            return self._run_more(item, paths)
         cat = category(paths[0])
         paths = [p for p in paths if category(p) == cat]
         kind, name = item.key.split(":", 1)
@@ -294,6 +321,27 @@ class UtsuriApp(QObject):
         except Exception as e:  # noqa: BLE001
             traceback.print_exc()
             self.toasts.error(f"Couldn't open {name}", friendly_error(e))
+
+    def _run_more(self, item: Item, paths: list[str]):
+        tag, _, tid = item.key.partition(":")
+        if tag == "xw":
+            from . import pdfwin
+            _, files, _ = more.kind(paths)
+            try:
+                if tid == "organize":
+                    self.open_window(pdfwin.OrganizeWindow([str(f) for f in files], self.notify))
+                else:
+                    cls = {"watermark": pdfwin.WatermarkWindow, "unlock": pdfwin.UnlockWindow}[tid]
+                    self.open_window(cls(str(files[0]), self.notify))
+            except Exception as e:  # noqa: BLE001
+                traceback.print_exc()
+                self.toasts.error(f"Couldn't open {item.label}", friendly_error(e))
+            return
+        if not hasattr(self, "_clip"):
+            self._clip = _Clip()
+        self.submit(item.key, paths, more.job(item.key, paths, self._clip.text.emit,
+                                              lambda p: self._clip.image.emit(str(p))),
+                    f"{item.label}…")
 
     def open_window(self, w: QWidget):
         if hasattr(w, "submit"):
