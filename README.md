@@ -63,9 +63,18 @@ You can also right-click a file → **Utsuri…**, use **Send to → Utsuri**, o
 | File | Convert to | Tools |
 |---|---|---|
 | Images (JPG, PNG, WEBP, HEIC, AVIF, TIFF, BMP, GIF, ICO) | Any of those, or PDF. Several images become one combined PDF | **Compress** (by quality or to a target size such as "under 500 KB", with a before/after preview, several files at once) · **Resize** · **Crop** (ratios, live pixel size, rotate) · **Edit** (Auto, light/colour, rotate, flip, B&W, hold to compare) · **Annotate** (arrows, boxes, numbered steps, text, marker) · **Redact** · **Add BG** · **Metadata** (camera, date, GPS location with a map link; remove location only or remove everything) |
-| PDF | JPG or PNG (one per page), DOCX, TXT | Compress · Split · Rotate · Merge (drop several) · **Protect** (AES-256 password) · **Extract images** · Metadata |
+| PDF | JPG or PNG (one per page), DOCX, TXT | Compress · Split · Rotate · Merge (drop several) · **Protect** (AES-256 password) · **Extract images** · Metadata · **Organize** (reorder, rotate, delete, duplicate pages) · **Stamp** (text or image watermark) · **Unlock** · page numbers · grayscale · flatten · split in half or by bookmarks · **OCR** (searchable PDF, needs Tesseract) |
 | Word (.docx) | PDF (uses Microsoft Word if it's installed, otherwise a built-in renderer), TXT | — |
 | Text (.txt, .md, .csv…) | PDF, DOCX | — |
+| Video (MP4, MOV, MKV, WEBM…) | MP4, WEBM, GIF, MP3 (needs ffmpeg) | Compress |
+| Audio (MP3, M4A, WAV, FLAC…) | MP3, OPUS, WAV, FLAC (needs ffmpeg) | — |
+| Archives (ZIP, TAR.GZ, TAR.XZ…) | — | Extract beside it |
+| Folders | — | Every image inside → WEBP or JPG, or compressed, into a new folder |
+| Anything | — | Pack into ZIP, TAR.GZ or TAR.XZ · copy the path |
+
+Images also get **Copy** (to the clipboard), **Text** (copy the text in a picture, needs Tesseract), quick size presets and **No GPS**.
+
+On a Ryoku desktop (Hyprland, Wayland) the same menu runs inside the bar through the Utsuri plugin, with Shift + drag working there too.
 
 **Settings** (tray menu): trigger key (Shift, Ctrl or Alt), where results go (next to the original or a `Utsuri` subfolder), JPG/WebP quality, PDF → image resolution, and start at login.
 
