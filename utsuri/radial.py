@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Callable
 
 from PySide6.QtCore import (QEasingCurve, QObject, QPoint, QPointF, QRectF, QRunnable, Qt,
-                            QThreadPool, QTimer, QVariantAnimation, Signal)
+                            QTimer, QVariantAnimation, Signal)
 from PySide6.QtGui import (QColor, QCursor, QFont, QGuiApplication, QImage, QPainter,
                            QPainterPath, QPen, QPixmap, QRadialGradient)
 from PySide6.QtWidgets import QWidget
@@ -235,7 +235,7 @@ class RadialMenu(QWidget):
         job = _RenderJob(self._serial, n, self._raw_backdrop)
         from .util import keep, release
         job.sig.done.connect(lambda *a, j=job: (release(j), self._rendered(*a)))
-        QThreadPool.globalInstance().start(keep(job))
+        glass.render_pool().start(keep(job))
 
     def _rendered(self, serial: int, n: int, img: QImage, light: bool):
         if serial == self._serial:

@@ -261,6 +261,22 @@ def exclude_from_capture(hwnd: int) -> bool:
 from PySide6.QtCore import QObject, QRect, QRunnable, QThreadPool, QTimer, Signal  # noqa: E402
 
 
+_RENDER_POOL: QThreadPool | None = None
+
+
+def render_pool() -> QThreadPool:
+    """Where liquid-glass renders run. macOS: one at a time. Several numpy renders at
+    once (menu, window and toast glass) segfaulted the Apple Silicon test run while
+    the main thread was in a Quartz call; elsewhere they share the global pool."""
+    global _RENDER_POOL
+    if sys.platform != "darwin":
+        return QThreadPool.globalInstance()
+    if _RENDER_POOL is None:
+        _RENDER_POOL = QThreadPool()
+        _RENDER_POOL.setMaxThreadCount(1)
+    return _RENDER_POOL
+
+
 class _LiquidSig(QObject):
     done = Signal(int, QImage, bool)
 
@@ -338,7 +354,7 @@ class LiquidBacking(QObject):
         job = _LiquidJob(self._serial, pil, rect.width(), rect.height(), self.radius, self.style)
         from .util import keep, release
         job.sig.done.connect(lambda *a, j=job: (release(j), self._done(*a)))
-        QThreadPool.globalInstance().start(keep(job))
+        render_pool().start(keep(job))
 
     def _done(self, serial, img, light):
         if serial == self._serial:
