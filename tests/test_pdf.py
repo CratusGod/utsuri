@@ -166,7 +166,7 @@ def test_chapters_without_bookmarks(tmp_path):
     assert "no bookmarks" in fail(["tool", "chapters", str(p)])["error"]
 
 
-@pytest.mark.skipif(not Path(pdfmod.TESSDATA, "eng.traineddata").is_file(), reason="no eng tessdata")
+@pytest.mark.skipif(not Path(eng.ds_extras.tessdata(), "eng.traineddata").is_file(), reason="no eng tessdata")
 def test_searchable(scan):
     r = ok(["tool", "searchable", str(scan)])
     out = Path(r["outs"][0])
@@ -181,7 +181,7 @@ def test_searchable_refuses_a_text_pdf(six):
 
 
 def test_searchable_missing_language(scan):
-    assert "tesseract-data-zzz" in fail(["--ocr-lang", "zzz", "tool", "searchable", str(scan)])["error"]
+    assert "'zzz' isn't installed" in fail(["--ocr-lang", "zzz", "tool", "searchable", str(scan)])["error"]
 
 
 # ---------------------------------------------------------------- organize

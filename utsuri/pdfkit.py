@@ -19,7 +19,6 @@ import pymupdf as fitz
 
 from .archive import temp_part
 
-TESSDATA = "/usr/share/tessdata"
 OCR_DPI = 300
 NUMBER_PT = 12
 _io = {"open": fitz.open, "sibling": None}
@@ -183,7 +182,8 @@ def check_needs_ocr(src) -> None:
 def make_searchable(src, lang: str) -> tuple[Path, int]:
     """OCR the pages that have no text; pages with text are copied untouched.
     Returns (output, pages recognised)."""
-    tess = os.environ.get("TESSDATA_PREFIX") or TESSDATA
+    from .extras import tessdata
+    tess = tessdata()
     with _open(src) as doc:
         todo = [i for i, p in enumerate(doc) if not p.get_text().strip()]
         if not todo:

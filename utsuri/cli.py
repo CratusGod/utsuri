@@ -292,8 +292,7 @@ def _t_searchable(files: list[Path], everything: list[Path]) -> dict:
         raise Refusal(f"'{lang}' isn't a valid OCR language (use codes like eng or eng+vie)")
     missing = [c for c in lang.split("+") if c not in ds_extras.ocr_langs()]
     if missing:
-        raise Refusal(f"OCR language '{missing[0]}' isn't installed. "
-                      f"Install the 'tesseract-data-{missing[0]}' package.")
+        raise Refusal(ds_extras.missing_lang_message(missing[0]))
     outs, done = [], 0
     for f in files:
         out, n = ds_pdf.make_searchable(f, lang)

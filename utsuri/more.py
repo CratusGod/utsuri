@@ -103,7 +103,8 @@ def job(key: str, paths: list[str], copy_text, copy_image):
         return run_copy_image
     if tid == "ocr":
         def run_ocr():
-            out, text = extras.ocr(files[0], cli.OPTIONS["ocr_lang"], cli.convert.open_image, cli.util.sibling)
+            out, text = extras.ocr(files[0], cli.OPTIONS["ocr_lang"], cli.convert.open_image, cli.util.sibling,
+                                   copy=False)
             copy_text(text)
             words = len(text.split())
             return report.Result("Text copied", f"{out.name} · {words} word{'s' if words != 1 else ''}", [out], files)

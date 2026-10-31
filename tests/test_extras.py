@@ -63,26 +63,59 @@ def test_ocr_language_is_validated(png):
 
 def test_ocr_names_the_missing_language_package(png):
     r = fail(["--ocr-lang", "eng+zzz", "tool", "ocr", str(png)])
-    assert "tesseract-data-zzz" in r["error"] or "tesseract isn't installed" in r["error"]
+    assert "'zzz' isn't installed" in r["error"] or "esseract isn't installed" in r["error"]
 
 
-@pytest.mark.skipif(shutil.which("tesseract") is None, reason="tesseract not installed")
-def test_ocr_reads_text_saves_and_copies_it(clipboard, tmp_path):
-    if "eng" not in eng.ds_extras.ocr_langs():
-        pytest.skip("tesseract has no eng data")
+def _hello(tmp_path) -> Path:
     p = tmp_path / "shot.webp"
     im = Image.new("RGB", (900, 220), "white")
     font = ImageFont.load_default(size=96)
     ImageDraw.Draw(im).text((40, 50), "HELLO 123", fill="black", font=font)
     im.save(p)
+    return p
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the wl-copy fake is a shell script")
+@pytest.mark.skipif(eng.ds_extras.tesseract() is None, reason="tesseract not installed")
+def test_ocr_reads_text_saves_and_copies_it(clipboard, tmp_path):
+    if "eng" not in eng.ds_extras.ocr_langs():
+        pytest.skip("tesseract has no eng data")
+    p = _hello(tmp_path)
     r = ok(["tool", "ocr", str(p)])
     out = Path(r["outs"][0])
     assert out.name == "shot Text.txt" and "HELLO" in out.read_text()
     assert "HELLO" in Path(f"{clipboard}.data").read_text()
 
 
+@pytest.mark.skipif(eng.ds_extras.tesseract() is None, reason="tesseract not installed")
+def test_ocr_for_the_desktop_app_copies_through_qt_not_wl_copy(tmp_path, monkeypatch):
+    """The Text slice: no wl-copy anywhere (Windows, macOS), the text still arrives."""
+    if "eng" not in eng.ds_extras.ocr_langs():
+        pytest.skip("tesseract has no eng data")
+    from utsuri import more
+    real_which = shutil.which
+    monkeypatch.setattr(eng.ds_extras.shutil, "which", lambda c: None if c == "wl-copy" else real_which(c))
+    monkeypatch.setitem(eng.OPTIONS, "ocr_lang", "eng")
+    copied = []
+    p = _hello(tmp_path)
+    res = more.job("x:ocr", [str(p)], copied.append, None)()
+    assert res.outs[0].name == "shot Text.txt" and "HELLO" in copied[0]
+
+
+def test_tesseract_is_found_in_program_files_without_path(tmp_path, monkeypatch):
+    exe = tmp_path / "Tesseract-OCR" / "tesseract.exe"
+    (exe.parent / "tessdata").mkdir(parents=True)
+    exe.write_bytes(b"")
+    monkeypatch.setattr(eng.ds_extras, "IS_WIN", True)
+    monkeypatch.setattr(eng.ds_extras.shutil, "which", lambda c: None)
+    monkeypatch.setenv("ProgramFiles", str(tmp_path))
+    monkeypatch.delenv("TESSDATA_PREFIX", raising=False)
+    assert eng.ds_extras.tesseract() == str(exe)
+    assert eng.ds_extras.tessdata() == str(exe.parent / "tessdata")
+
+
 def test_ocr_of_a_blank_image_says_so(clipboard, tmp_path):
-    if shutil.which("tesseract") is None or "eng" not in eng.ds_extras.ocr_langs():
+    if eng.ds_extras.tesseract() is None or "eng" not in eng.ds_extras.ocr_langs():
         pytest.skip("tesseract with eng needed")
     p = tmp_path / "blank.png"
     Image.new("RGB", (200, 100), "white").save(p)
