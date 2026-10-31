@@ -248,7 +248,9 @@ class UtsuriApp(QObject):
         return human_size(file_size(paths[0]))
 
     def build_rings(self, paths: list[str]) -> dict[str, list[Item]]:
-        rings = self._upstream_rings(paths)
+        # Never touches self: the end-to-end scripts call UtsuriApp.build_rings(None, paths)
+        # to know where each slice will be without starting the app.
+        rings = UtsuriApp._upstream_rings(paths)
         for name, items in more.rings(paths).items():
             if name in rings:
                 rings[name] = rings[name] + items
@@ -256,7 +258,8 @@ class UtsuriApp(QObject):
                 rings[name] = items
         return rings or {"Unsupported": []}
 
-    def _upstream_rings(self, paths: list[str]) -> dict[str, list[Item]]:
+    @staticmethod
+    def _upstream_rings(paths: list[str]) -> dict[str, list[Item]]:
         cat = category(paths[0])
         if cat is None:
             return {}

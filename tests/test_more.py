@@ -14,10 +14,8 @@ from utsuri import more, report
 
 
 def rings_for(paths) -> dict:
-    """UtsuriApp.build_rings without starting the app (it never touches self's Qt state)."""
-    class Bare:
-        _upstream_rings = A.UtsuriApp._upstream_rings
-    return A.UtsuriApp.build_rings(Bare(), [str(p) for p in paths])
+    """Exactly how the end-to-end scripts call it: no app, self is None."""
+    return A.UtsuriApp.build_rings(None, [str(p) for p in paths])
 
 
 def labels(rings: dict, name: str) -> list[str]:
