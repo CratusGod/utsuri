@@ -61,9 +61,9 @@ def ocr_langs() -> list[str]:
 
 def ocr(src: Path, lang: str, open_image, sibling) -> tuple[Path, str]:
     """Read the text in an image, save it as "<name> Text.txt" and copy it."""
-    _need("tesseract", "tesseract")
-    if not LANG_RE.match(lang):
+    if not LANG_RE.match(lang):   # before anything else: the codes reach a command line
         raise ExtrasError(f"'{lang}' isn't a valid OCR language (use codes like eng or eng+vie)")
+    _need("tesseract", "tesseract")
     have = ocr_langs()
     missing = [code for code in lang.split("+") if code not in have]
     if missing:

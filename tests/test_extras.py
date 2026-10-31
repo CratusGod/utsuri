@@ -1,6 +1,8 @@
 """Clipboard (wl-copy) and OCR (tesseract)."""
 from __future__ import annotations
 
+import sys
+
 import os
 import shutil
 import stat
@@ -26,6 +28,7 @@ def clipboard(tmp_path, monkeypatch) -> Path:
     return log
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="the wl-copy fake is a shell script")
 def test_copy_paths_uses_every_dropped_item(clipboard, photos, png):
     r = ok(["tool", "copy-path", str(photos), str(png)])
     assert r["title"] == "2 paths copied" and r["outs"] == []
@@ -33,6 +36,7 @@ def test_copy_paths_uses_every_dropped_item(clipboard, photos, png):
     assert "text/plain;charset=utf-8" in Path(f"{clipboard}.args").read_text()
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="the wl-copy fake is a shell script")
 def test_copy_image_sends_png(clipboard, jpg):
     ok(["tool", "copy", str(jpg)])
     data = Path(f"{clipboard}.data").read_bytes()
@@ -40,6 +44,7 @@ def test_copy_image_sends_png(clipboard, jpg):
     assert "image/png" in Path(f"{clipboard}.args").read_text()
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="the wl-copy fake is a shell script")
 def test_copy_image_handles_cmyk(clipboard, tmp_path):
     p = tmp_path / "print.jpg"
     Image.new("CMYK", (40, 30), (0, 128, 255, 0)).save(p)

@@ -285,6 +285,8 @@ def _t_ocr(files: list[Path], everything: list[Path]) -> dict:
 
 
 def _t_searchable(files: list[Path], everything: list[Path]) -> dict:
+    for f in files:
+        ds_pdf.check_needs_ocr(f)
     lang = OPTIONS["ocr_lang"]
     if not ds_extras.LANG_RE.match(lang):
         raise Refusal(f"'{lang}' isn't a valid OCR language (use codes like eng or eng+vie)")

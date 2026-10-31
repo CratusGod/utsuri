@@ -173,6 +173,13 @@ def split_chapters(src) -> list[Path]:
         return outs
 
 
+def check_needs_ocr(src) -> None:
+    """Refuse a PDF whose every page already has text (before any OCR setup check)."""
+    with _open(src) as doc:
+        if all(p.get_text().strip() for p in doc):
+            raise PdfError("This PDF already has selectable text")
+
+
 def make_searchable(src, lang: str) -> tuple[Path, int]:
     """OCR the pages that have no text; pages with text are copied untouched.
     Returns (output, pages recognised)."""
@@ -273,16 +280,41 @@ def _upright(page, rect, draw):
         page.set_cropbox(crop)
 
 
-def _system_font():
-    """A system sans with Vietnamese and other Latin/Greek/Cyrillic letters, or None."""
-    if shutil.which("fc-match") is None:
-        return None
+# Where Windows and macOS keep a sans with Vietnamese, Greek and Cyrillic letters
+# (no fontconfig there). Checked in order; the first that draws "ả" wins.
+FONT_FILES = [
+    os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts", f) for f in ("segoeui.ttf", "arial.ttf", "tahoma.ttf")
+] + ["/System/Library/Fonts/Supplemental/Arial Unicode.ttf", "/Library/Fonts/Arial Unicode.ttf",
+     "/System/Library/Fonts/Supplemental/Arial.ttf", "/System/Library/Fonts/Helvetica.ttc"]
+
+
+def _font_with_vietnamese(path: str):
     try:
-        r = subprocess.run(["fc-match", "-f", "%{file}", "sans-serif:charset=1ea3 111 3b1 431"],
-                           capture_output=True, text=True, timeout=10)
-        return fitz.Font(fontfile=r.stdout.strip()) if r.stdout.strip() else None
-    except (OSError, subprocess.SubprocessError, RuntimeError):
+        f = fitz.Font(fontfile=path)
+    except RuntimeError:
         return None
+    return f if f.has_glyph(0x1EA3) else None
+
+
+def _system_font():
+    """A system sans with Vietnamese and other Latin/Greek/Cyrillic letters, or None:
+    fontconfig's pick on Linux, else a known font file on Windows or macOS."""
+    if shutil.which("fc-match") is not None:
+        try:
+            r = subprocess.run(["fc-match", "-f", "%{file}", "sans-serif:charset=1ea3 111 3b1 431"],
+                               capture_output=True, text=True, timeout=10)
+            if r.stdout.strip():
+                f = _font_with_vietnamese(r.stdout.strip())
+                if f:
+                    return f
+        except (OSError, subprocess.SubprocessError):
+            pass
+    for path in FONT_FILES:
+        if os.path.isfile(path):
+            f = _font_with_vietnamese(path)
+            if f:
+                return f
+    return None
 
 
 def _runs(text: str, size: float) -> list:
