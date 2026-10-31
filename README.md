@@ -76,11 +76,13 @@ Images also get **Copy** (to the clipboard), **Text** (copy the text in a pictur
 
 On a Ryoku desktop (Hyprland, Wayland) the same menu runs inside the bar through the Utsuri plugin, with Shift + drag working there too.
 
-**Settings** (tray menu): trigger key (Shift, Ctrl or Alt), where results go (next to the original or a `Utsuri` subfolder), JPG/WebP quality, PDF → image resolution, and start at login.
+**Settings** (tray menu): trigger key (Shift, Ctrl or Alt), where results go (next to the original or a `Utsuri` subfolder), JPG/WebP quality, PDF → image resolution, colour theme, and start at login.
 
 ## The look
 
 The menu, notifications and windows use real **liquid-glass** rendering. Utsuri captures the screen behind each surface and refracts it through the shape. A curved edge bends light, R, G and B bend by slightly different amounts (which gives the rainbow fringe), a highlight runs along the rim facing the light, and the tint adapts to what's behind it so text stays readable. The menu renders on a background thread while it pops in, so it still opens instantly.
+
+Eight colour themes: Utsuri's own blue glass, plus Catppuccin Macchiato, Tokyo Night Storm, Gruvbox Dark Hard, Rosé Pine Moon, Everforest Dark Hard, Kanagawa Dragon and Synthwave '84. A theme tints the glass, the rim and the accents, and changes apply to open windows right away.
 
 ## Tested on real desktops
 
@@ -96,6 +98,8 @@ Every push runs these jobs on GitHub's Windows, Mac and Linux machines:
 ## License
 
 [MIT](LICENSE): free to use, modify and share.
+
+The seven named colour themes come from the Ryoku colour scheme catalogue, imported from [noctalia-colorschemes](https://github.com/noctalia-dev/noctalia-colorschemes) (MIT, © noctalia-dev).
 
 ## Run from source
 

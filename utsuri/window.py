@@ -8,7 +8,7 @@ from PySide6.QtGui import QColor, QImage, QPainter, QPixmap
 from PySide6.QtWidgets import (QHBoxLayout, QLabel, QPushButton, QSizeGrip, QVBoxLayout,
                                QWidget)
 
-from . import glass
+from . import glass, themes
 
 IS_WIN = sys.platform == "win32"
 
@@ -135,9 +135,9 @@ class GlassWindow(QWidget):
         if img is not None and not img.isNull() and img.size() == self.size():
             p.drawImage(0, 0, img)
             # large surfaces need more opacity than a menu so content stays readable
-            glass.paint_glass(p, path, tint=QColor(22, 17, 34, 150), rainbow_alpha=150)
+            glass.paint_glass(p, path, tint=themes.tint(22, 17, 34, 150), rainbow_alpha=150)
         else:
-            tint = QColor(30, 24, 44, 125) if self._acrylic else QColor(38, 30, 56, 228)
+            tint = themes.tint(30, 24, 44, 125) if self._acrylic else themes.tint(38, 30, 56, 228)
             glass.paint_glass(p, path, tint=tint, rainbow_alpha=150)
 
 

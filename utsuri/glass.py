@@ -10,20 +10,15 @@ from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QImage, QLinearGradient,
                            QPainter, QPainterPath, QPen, QPixmap, QRadialGradient)
 
-# Rainbow stops for the iridescent rim (soft, pastel-ish so it reads as "glass").
-IRIDESCENT = ["#ff6b9d", "#ffb36b", "#ffe66b", "#7dffb0", "#6bd5ff", "#8a7bff", "#e07bff", "#ff6b9d"]
-
-TEXT = "#ffffff"
-TEXT_DIM = "rgba(255,255,255,0.68)"
-ACCENT_A = "#5ac8ff"
-ACCENT_B = "#2f7bff"
-ACCENT_C = "#5b5bff"
+from . import themes
 
 
 def iridescent_pen(center: QPointF, width: float, alpha: int = 200, angle: float = 30) -> QPen:
+    """The rim's colour ring: a soft rainbow by default, the theme's own colours otherwise."""
+    rim = themes.current().rim
     g = QConicalGradient(center, angle)
-    n = len(IRIDESCENT) - 1
-    for i, c in enumerate(IRIDESCENT):
+    n = len(rim) - 1
+    for i, c in enumerate(rim):
         col = QColor(c)
         col.setAlpha(alpha)
         g.setColorAt(i / n, col)
@@ -31,9 +26,10 @@ def iridescent_pen(center: QPointF, width: float, alpha: int = 200, angle: float
 
 
 def iridescent_brush(rect: QRectF, alpha: int = 60) -> QBrush:
+    rim = themes.current().rim
     g = QLinearGradient(rect.topLeft(), rect.bottomRight())
-    n = len(IRIDESCENT) - 1
-    for i, c in enumerate(IRIDESCENT):
+    n = len(rim) - 1
+    for i, c in enumerate(rim):
         col = QColor(c)
         col.setAlpha(alpha)
         g.setColorAt(i / n, col)
@@ -72,7 +68,7 @@ def paint_glass(p: QPainter, path: QPainterPath, backdrop: QPixmap | None = None
         p.restore()
 
     # 2. tint – keeps white text readable on any wallpaper
-    p.fillPath(path, tint or QColor(28, 24, 40, 105))
+    p.fillPath(path, tint or themes.tint(28, 24, 40, 105))
 
     # 3. faint rainbow wash across the body
     p.fillPath(path, iridescent_brush(rect, 26))
@@ -115,7 +111,10 @@ def paint_glass(p: QPainter, path: QPainterPath, backdrop: QPixmap | None = None
 
 
 # ---------------------------------------------------------------- Qt stylesheet
-_QSS = f"""
+def _qss(t: themes.Theme) -> str:
+    TEXT, TEXT_DIM, ACCENT_A, ACCENT_B, ACCENT_C = t.text, t.text_dim, t.accent_a, t.accent_b, t.accent_c
+    MENU = t.surface_variant
+    return f"""
 * {{ color: {TEXT}; font-family: "@FONT@", sans-serif; font-size: 10pt; }}
 QWidget#glassRoot {{ background: transparent; }}
 QLabel#title {{ font-size: 11pt; font-weight: 600; }}
@@ -129,7 +128,7 @@ QPushButton {{
 QPushButton:hover {{ background: rgba(255,255,255,0.22); }}
 QPushButton:pressed {{ background: rgba(255,255,255,0.08); }}
 QPushButton:checked {{
-  background: qlineargradient(x1:0,y1:0,x2:1,y2:1, stop:0 rgba(255,138,92,0.85), stop:1 rgba(255,79,139,0.85));
+  background: qlineargradient(x1:0,y1:0,x2:1,y2:1, stop:0 {t.check_a}, stop:1 {t.check_b});
   border: 1px solid rgba(255,255,255,0.55);
 }}
 QPushButton#primary {{
@@ -160,7 +159,7 @@ QFrame#card {{ background: rgba(255,255,255,0.07); border: 1px solid rgba(255,25
 QLabel#big {{ font-size: 17pt; font-weight: 700; }}
 QLabel#good {{ color: #8dffb8; font-weight: 600; }}
 QLabel#warn {{ color: #ffd36b; font-weight: 600; }}
-QComboBox QAbstractItemView {{ background: #2a2438; border: 1px solid rgba(255,255,255,0.25); }}
+QComboBox QAbstractItemView {{ background: {MENU}; border: 1px solid rgba(255,255,255,0.25); }}
 QCheckBox::indicator {{ width: 16px; height: 16px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.1); }}
 QCheckBox::indicator:checked {{ background: qlineargradient(x1:0,y1:0,x2:1,y2:1, stop:0 {ACCENT_A}, stop:1 {ACCENT_B}); }}
 QTableWidget {{ background: rgba(0,0,0,0.12); border: 1px solid rgba(255,255,255,0.18); border-radius: 8px; gridline-color: rgba(255,255,255,0.08); }}
@@ -170,17 +169,18 @@ QHeaderView::section {{ background: rgba(255,255,255,0.10); border: none; paddin
 QScrollBar:vertical {{ background: transparent; width: 8px; }}
 QScrollBar::handle:vertical {{ background: rgba(255,255,255,0.3); border-radius: 4px; min-height: 30px; }}
 QScrollBar::add-line, QScrollBar::sub-line {{ height: 0; }}
-QToolTip {{ background: #2a2438; color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 4px; }}
-QMenu {{ background: #2a2438; border: 1px solid rgba(255,255,255,0.25); border-radius: 8px; padding: 4px; }}
+QToolTip {{ background: {MENU}; color: {TEXT}; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 4px; }}
+QMenu {{ background: {MENU}; border: 1px solid rgba(255,255,255,0.25); border-radius: 8px; padding: 4px; }}
 QMenu::item {{ padding: 6px 18px; border-radius: 5px; }}
 QMenu::item:selected {{ background: rgba(255,255,255,0.15); }}
 """
 
 
 def qss() -> str:
-    """The stylesheet, with a font family that is really installed (see util.ui_family)."""
+    """The stylesheet for the current theme, with a font family that is really installed
+    (see util.ui_family)."""
     from .util import ui_family
-    return _QSS.replace("@FONT@", ui_family(False))
+    return _qss(themes.current()).replace("@FONT@", ui_family(False))
 
 
 def __getattr__(name):        # keep `glass.QSS` working

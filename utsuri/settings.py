@@ -7,7 +7,7 @@ from PySide6.QtCore import QSettings, Qt, Signal
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QGridLayout, QHBoxLayout, QLabel,
                                QPushButton, QSlider, QVBoxLayout)
 
-from . import __version__
+from . import __version__, glass, themes
 from .util import CONFIG
 from .window import GlassWindow
 
@@ -22,6 +22,7 @@ DEFAULTS = {
     "jpg_quality": 90,
     "pdf_dpi": 200,
     "trigger": "shift",
+    "theme": "Default",
     "welcomed": False,
 }
 
@@ -49,6 +50,7 @@ class Settings:
     def apply(self):
         for k in ("output", "jpg_quality", "pdf_dpi"):
             CONFIG[k] = self.get(k)
+        themes.set_theme(self.get("theme"))
 
 
 # ---------------------------------------------------------------- autostart (Windows)
@@ -108,7 +110,7 @@ class SettingsWindow(GlassWindow):
     changed = Signal()
 
     def __init__(self, settings: Settings):
-        super().__init__("Settings", size=(520, 470))
+        super().__init__("Settings", size=(520, 510))
         self.s = settings
         grid = QGridLayout()
         grid.setHorizontalSpacing(14)
@@ -159,6 +161,12 @@ class SettingsWindow(GlassWindow):
         grid.addWidget(self.dpi, r, 1)
         r += 1
 
+        grid.addWidget(QLabel("Theme"), r, 0)
+        self.theme = combo([(n, n) for n in themes.names()], self.s.get("theme"))
+        self.theme.currentIndexChanged.connect(lambda _: self._set_theme(self.theme.currentData()))
+        grid.addWidget(self.theme, r, 1)
+        r += 1
+
         if IS_WIN or IS_MAC or IS_LINUX:
             self.auto = QCheckBox("Start Utsuri with Windows" if IS_WIN else "Open Utsuri at login")
             self.auto.setChecked(autostart_enabled())
@@ -190,6 +198,20 @@ class SettingsWindow(GlassWindow):
         self.s.set(key, value)
         self.changed.emit()
 
+    def _set_theme(self, name: str):
+        self._save("theme", name)
+        restyle()
+
+
+def restyle():
+    """Repaint every open Utsuri window and menu in the current theme."""
+    from PySide6.QtWidgets import QApplication, QMenu
+    from .window import GlassWindow
+    for w in QApplication.topLevelWidgets():
+        if isinstance(w, (GlassWindow, QMenu)):
+            w.setStyleSheet(glass.QSS)
+        w.update()
+
 
 class WelcomeWindow(GlassWindow):
     def __init__(self, settings: Settings, trigger_label: str = "Shift"):
@@ -207,8 +229,9 @@ class WelcomeWindow(GlassWindow):
             badge = QLabel(n)
             badge.setAlignment(Qt.AlignCenter)
             badge.setFixedSize(34, 34)
-            badge.setStyleSheet("background: qlineargradient(x1:0,y1:0,x2:1,y2:1, stop:0 #5ac8ff, stop:1 #2f7bff);"
-                                "border-radius: 17px; font-weight: 700; font-size: 12pt;")
+            t = themes.current()
+            badge.setStyleSheet(f"background: qlineargradient(x1:0,y1:0,x2:1,y2:1, stop:0 {t.accent_a}, "
+                                f"stop:1 {t.accent_b}); border-radius: 17px; font-weight: 700; font-size: 12pt;")
             row.addWidget(badge)
             col = QVBoxLayout()
             col.setSpacing(0)

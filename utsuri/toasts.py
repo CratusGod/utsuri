@@ -17,7 +17,7 @@ from PySide6.QtGui import (QColor, QCursor, QDesktopServices, QFont, QFontMetric
                            QGuiApplication, QPainter, QPainterPath, QPen, QPixmap)
 from PySide6.QtWidgets import QWidget
 
-from . import glass
+from . import glass, themes
 from .util import ui_family
 from .report import Result
 
@@ -228,9 +228,9 @@ class ToastCard(QWidget):
         err = self.state == "error"
         if img is not None and not img.isNull() and img.size() == self.size():
             p.drawImage(0, 0, img)
-            tint = QColor(140, 30, 50, 150) if err else QColor(20, 16, 32, 120)
+            tint = QColor(140, 30, 50, 150) if err else themes.tint(20, 16, 32, 120)
         else:
-            tint = QColor(120, 30, 45, 230) if err else QColor(34, 27, 52, 232)
+            tint = QColor(120, 30, 45, 230) if err else themes.tint(34, 27, 52, 232)
         glass.paint_glass(p, path, tint=tint, rainbow_alpha=170)
 
         x = 16
