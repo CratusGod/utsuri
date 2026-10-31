@@ -112,5 +112,8 @@ def photos(tmp_path) -> Path:
     _draw((300, 200)).save(d / "trip" / "day 1" / "c #1.png")
     _draw((64, 64)).save(d / ".thumbnails" / "hidden.png")
     (d / "notes.txt").write_text("not an image\n")
-    (d / "link.png").symlink_to(d / "a.png")
+    try:
+        (d / "link.png").symlink_to(d / "a.png")
+    except OSError:  # Windows without Developer Mode or admin can't make symlinks
+        pass
     return d

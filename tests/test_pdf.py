@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import shutil
+import sys
 from pathlib import Path
 
 import pymupdf as fitz
@@ -26,6 +27,15 @@ def text_of(p: Path, i: int = 0) -> str:
 def pages(p: Path) -> int:
     with fitz.open(p) as d:
         return d.page_count
+
+
+def _long_paths_enabled() -> bool:
+    import winreg
+    try:
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\FileSystem") as k:
+            return winreg.QueryValueEx(k, "LongPathsEnabled")[0] == 1
+    except OSError:
+        return False
 
 
 @pytest.fixture
@@ -372,6 +382,8 @@ def test_a_huge_watermark_is_shrunk_to_fit_the_page(six):
 
 def test_long_file_names_still_save(tmp_path):
     p = tmp_path / ("L" * 244 + ".pdf")  # the output fits NAME_MAX, a ".stem.part.pdf" would not
+    if sys.platform == "win32" and len(str(p)) >= 260 and not _long_paths_enabled():
+        pytest.skip("Windows long paths are off, so this path can't exist here")
     d = fitz.open()
     d.new_page()
     d.save(p)

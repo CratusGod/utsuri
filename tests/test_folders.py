@@ -48,7 +48,8 @@ def test_folder_round_trip(photos, fmt, suffix):
     r = ok(["tool", fmt, str(photos)])
     out = Path(r["outs"][0])
     assert out.name == photos.name + suffix and out.parent == photos.parent
-    assert "1 link left out" in r["detail"]
+    if (photos / "link.png").is_symlink():
+        assert "1 link left out" in r["detail"]
     extracted = Path(ok(["tool", "extract", str(out)])["outs"][0])
     assert extracted.name == photos.name + " (1)"  # the original folder is in the way
     for rel in ("a.png", "trip/b.jpg", "trip/day 1/c #1.png", "notes.txt", ".thumbnails/hidden.png"):
@@ -142,7 +143,8 @@ def test_batch_converts_every_image_and_keeps_the_layout(photos):
     got = sorted(p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file())
     assert got == ["a.webp", "trip/b.webp", "trip/day 1/c #1.webp"]
     assert r["title"] == "3 images → WEBP"
-    assert sorted(p.name for p in photos.iterdir()) == [".thumbnails", "a.png", "link.png", "notes.txt", "trip"]
+    link = ["link.png"] if (photos / "link.png").is_symlink() else []
+    assert sorted(p.name for p in photos.iterdir()) == sorted([".thumbnails", "a.png", *link, "notes.txt", "trip"])
 
 
 def test_batch_skips_images_already_in_the_target_format(photos):
