@@ -904,8 +904,14 @@ def main():
         time.sleep(1)
         wk.stop_recording(rec)
         wk.stop_app(app)
-        if LOCAL:
+        if LOCAL:  # leave someone's PC as it was: no sample files on the Desktop or in C:\
             wk.close_explorer(EXP)
+            for n in SOURCES:
+                p = DESK / f"D-{n}"
+                if p.is_file() and p.name not in DESK_BEFORE:
+                    p.unlink()
+            shutil.rmtree(EXP, ignore_errors=True)
+            shutil.rmtree(STASH, ignore_errors=True)
         wk.copy_app_log(OUT / "app_log.txt")
         try:  # the drag picture must never be baked into the glass
             log_text = (OUT / "app_log.txt").read_text(encoding="utf-8", errors="replace")
