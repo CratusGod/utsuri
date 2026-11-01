@@ -50,7 +50,8 @@ def test_an_image_keeps_upstream_rings_and_gains_more(png):
     r = rings_for([png])
     assert "PNG" not in labels(r, "Convert") and "JPG" in labels(r, "Convert")
     assert "Crop" in labels(r, "Tools")
-    assert {"Copy", "Text"} <= set(labels(r, "More"))
+    assert "Copy" in labels(r, "More")
+    assert ("Text" in labels(r, "More")) == more._ocr_ready(), "Text shows only with Tesseract's eng data"
     for twin in ("Compress", "≤ 500 KB", "1920 px", "1280 px", "No GPS"):  # the Tools ring does these
         assert twin not in labels(r, "More"), twin
 
