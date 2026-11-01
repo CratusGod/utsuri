@@ -1,0 +1,61 @@
+[   0.02] macOS 15.8.2 screen (1024, 768)
+[  15.88] icon positions (screen): {'D-Photo.jpg': (140, 148), 'D-Report.pdf': (140, 263), 'D-Appendix.pdf': (140, 378), 'D-Letter.docx': (140, 493), 'D-Graphic.png': (140, 608)}
+[  16.06] measured blob offset (not applied): -2 -26
+[  29.06] PASS JPG → PNG                       10.9s  D-Photo.png · 2400×1600
+[  31.13] icon positions (screen): {'D-Photo.jpg': (140, 148), 'D-Report.pdf': (140, 263), 'D-Appendix.pdf': (140, 378), 'D-Letter.docx': (140, 493), 'D-Graphic.png': (140, 608)}
+[  41.24] PASS JPG → WEBP                       9.6s  D-Photo.webp · 2400×1600
+[  43.08] icon positions (screen): {'D-Photo.jpg': (140, 148), 'D-Report.pdf': (140, 263), 'D-Appendix.pdf': (140, 378), 'D-Letter.docx': (140, 493), 'D-Graphic.png': (140, 608)}
+[  54.33] PASS JPG → HEIC                      10.7s  D-Photo.heic · 2400×1600
+[  56.14] icon positions (screen): {'D-Photo.jpg': (140, 148), 'D-Report.pdf': (140, 263), 'D-Appendix.pdf': (140, 378), 'D-Letter.docx': (140, 493), 'D-Graphic.png': (140, 608)}
+[  80.30] Traceback (most recent call last):
+  File "/Users/runner/work/utsuri/utsuri/demo/e2e_mac.py", line 292, in run
+    raise AssertionError("no output file appeared")
+AssertionError: no output file appeared
+
+[  80.47] FAIL JPG → PDF                       23.7s  AssertionError: no output file appeared
+[  82.14] icon positions (screen): {'D-Photo.jpg': (140, 148), 'D-Report.pdf': (140, 263), 'D-Appendix.pdf': (140, 378), 'D-Letter.docx': (140, 493), 'D-Graphic.png': (140, 608)}
+[  91.48] PASS PNG → JPG                        8.8s  D-Graphic.jpg · 800×533
+[  93.28] icon positions (screen): {'D-Photo.jpg': (140, 148), 'D-Report.pdf': (140, 263), 'D-Appendix.pdf': (140, 378), 'D-Letter.docx': (140, 493), 'D-Graphic.png': (140, 608)}
+[ 117.36] Traceback (most recent call last):
+  File "/Users/runner/work/utsuri/utsuri/demo/e2e_mac.py", line 292, in run
+    raise AssertionError("no output file appeared")
+AssertionError: no output file appeared
+
+[ 117.46] FAIL PDF → JPG (3 pages)             23.6s  AssertionError: no output file appeared
+[ 119.02] icon positions (screen): {'D-Photo.jpg': (140, 148), 'D-Report.pdf': (140, 263), 'D-Appendix.pdf': (140, 378), 'D-Letter.docx': (140, 493), 'D-Graphic.png': (140, 608)}
+[ 128.45] PASS PDF → TXT                        8.9s  D-Report.txt
+[ 130.50] icon positions (screen): {'D-Photo.jpg': (140, 148), 'D-Report.pdf': (140, 263), 'D-Appendix.pdf': (140, 378), 'D-Letter.docx': (140, 493), 'D-Graphic.png': (140, 608)}
+[ 154.29] Traceback (most recent call last):
+  File "/Users/runner/work/utsuri/utsuri/demo/e2e_mac.py", line 292, in run
+    raise AssertionError("no output file appeared")
+AssertionError: no output file appeared
+
+[ 154.41] FAIL DOCX → PDF                      23.4s  AssertionError: no output file appeared
+[ 156.31] icon positions (screen): {'D-Photo.jpg': (140, 148), 'D-Report.pdf': (140, 263), 'D-Appendix.pdf': (140, 378), 'D-Letter.docx': (140, 493), 'D-Graphic.png': (140, 608)}
+[ 167.10] PASS PDF Split                       10.2s  3 PDFs
+[ 169.12] icon positions (screen): {'D-Photo.jpg': (140, 148), 'D-Report.pdf': (140, 263), 'D-Appendix.pdf': (140, 378), 'D-Letter.docx': (140, 493), 'D-Graphic.png': (140, 608)}
+[ 180.00] PASS PDF Rotate                      10.3s  all pages at 90°
+[ 182.26] icon positions (screen): {'D-Photo.jpg': (140, 148), 'D-Report.pdf': (140, 263), 'D-Appendix.pdf': (140, 378), 'D-Letter.docx': (140, 493), 'D-Graphic.png': (140, 608)}
+[ 193.59] PASS PDF Compress                    10.8s  227 KB → 108 KB
+[ 195.40] icon positions (screen): {'D-Photo.jpg': (140, 148), 'D-Report.pdf': (140, 263), 'D-Appendix.pdf': (140, 378), 'D-Letter.docx': (140, 493), 'D-Graphic.png': (140, 608)}
+[ 208.66] PASS Merge 2 PDFs                    12.7s  5 pages
+[ 210.65] icon positions (screen): {'D-Photo.jpg': (140, 148), 'D-Report.pdf': (140, 263), 'D-Appendix.pdf': (140, 378), 'D-Letter.docx': (140, 493), 'D-Graphic.png': (140, 608)}
+[ 237.71] Traceback (most recent call last):
+  File "/Users/runner/work/utsuri/utsuri/demo/e2e_mac.py", line 292, in run
+    raise AssertionError("no output file appeared")
+AssertionError: no output file appeared
+
+[ 237.88] FAIL Compress (window, Enter)        26.7s  AssertionError: no output file appeared
+[ 239.82] icon positions (screen): {'D-Photo.jpg': (140, 148), 'D-Report.pdf': (140, 263), 'D-Appendix.pdf': (140, 378), 'D-Letter.docx': (140, 493), 'D-Graphic.png': (140, 608)}
+[ 253.17] PASS Resize 50% (window, Enter)      12.8s  2400×1600 → 1200×800
+[ 255.22] icon positions (screen): {'D-Photo.jpg': (140, 148), 'D-Report.pdf': (140, 263), 'D-Appendix.pdf': (140, 378), 'D-Letter.docx': (140, 493), 'D-Graphic.png': (140, 608)}
+[ 282.58] Traceback (most recent call last):
+  File "/Users/runner/work/utsuri/utsuri/demo/e2e_mac.py", line 292, in run
+    raise AssertionError("no output file appeared")
+AssertionError: no output file appeared
+
+[ 282.72] FAIL Add BG (window, Enter)          26.9s  AssertionError: no output file appeared
+[ 284.61] icon positions (screen): {'D-Photo.jpg': (140, 148), 'D-Report.pdf': (140, 263), 'D-Appendix.pdf': (140, 378), 'D-Letter.docx': (140, 493), 'D-Graphic.png': (140, 608)}
+[ 297.54] PASS Metadata: remove all (Enter)    12.4s  0 metadata fields left
+[ 299.51] icon positions (screen): {'D-Photo.jpg': (140, 148), 'D-Report.pdf': (140, 263), 'D-Appendix.pdf': (140, 378), 'D-Letter.docx': (140, 493), 'D-Graphic.png': (140, 608)}
+[ 300.71] DONE 12/17
