@@ -586,14 +586,6 @@ def v_tar(outs, srcs):
     return f"{t[0].name} holds {', '.join(names)}"
 
 
-def v_long_side(n):
-    def v(outs, srcs):
-        size = img_ok(outs[0])
-        assert max(size) == n, f"{size}"
-        return f"{outs[0].name} · {size[0]}×{size[1]}"
-    return v
-
-
 def v_gray_pdf(outs, srcs):
     import pymupdf
     with pymupdf.open(outs[0]) as d:
@@ -936,8 +928,6 @@ def main():
         run("Merge 2 PDFs", "explorer", ["Appendix.pdf", "Report.pdf"], "Tools", "Merge", v_merged,
             select_extra=True)
         # ---- the More and Pack rings
-        run("More: long side 1280", "explorer", ["Photo.jpg"], "More", "1280 px", v_long_side(1280))
-        run("More: no GPS", "explorer", ["Photo.jpg"], "More", "No GPS", v_no_gps_keep_camera)
         run("More: Copy image", "explorer", ["Second.jpg"], "More", "Copy", v_clipboard_image, expect_files=False)
         run("More: Text (OCR)", "explorer", ["Sign.png"], "More", "Text", v_ocr)
         run("More: PDF Gray", "explorer", ["Report.pdf"], "More", "Gray", v_gray_pdf)

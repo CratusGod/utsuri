@@ -19,18 +19,19 @@ PDF_WINDOWS = {"organize": ("Organize", "Reorder · rotate · delete"),
                "watermark": ("Stamp", "Text or image watermark"),
                "unlock": ("Unlock", "Remove a password")}
 # The radial menu fits about 8 characters per slice; cli's labels are for the bar panel.
-SHORT = {"compress-500kb": "≤ 500 KB", "long-1920": "1920 px", "long-1280": "1280 px",
-         "strip-location": "No GPS", "numbers": "Numbers", "gray": "Gray", "halves": "Halves",
+SHORT = {"numbers": "Numbers", "gray": "Gray", "halves": "Halves",
          "chapters": "Chapters", "searchable": "OCR", "ocr": "Text", "batch-webp": "→ WEBP",
          "batch-jpg": "→ JPG", "batch-compress": "Compress", "copy-path": "Path"}
-HINTS = {"compress-500kb": "For upload limits", "long-1920": "Long side 1920 px", "long-1280": "Long side 1280 px",
-         "strip-location": "Keep the rest", "copy": "Image to clipboard", "ocr": "Copy the text in it",
+HINTS = {"copy": "Image to clipboard", "ocr": "Copy the text in it",
          "numbers": "1, 2, 3 at the foot", "gray": "Black and white", "flatten": "Bake in forms",
          "halves": "Two files", "chapters": "One file per chapter", "searchable": "OCR every page",
          "extract": "Unpack beside it", "batch-webp": "Every image inside", "batch-jpg": "Every image inside",
          "batch-compress": "Every image inside", "copy-path": "To clipboard"}
-# Tools already in upstream's rings: not offered twice.
-UPSTREAM = {"compress", "half", "split", "rotate", "extract", "strip-all"}
+# Tools already in upstream's rings: not offered twice. That includes cli's one-click
+# presets whose job a Tools window does with the same option inside: Compress (to a
+# size), Resize (long side), Metadata (remove location only). The bar plugin keeps them.
+UPSTREAM = {"compress", "half", "split", "rotate", "extract", "strip-all",
+            "compress-500kb", "long-1920", "long-1280", "strip-location"}
 
 
 def kind(paths: list[str]) -> tuple[str, list[Path], list[Path]]:

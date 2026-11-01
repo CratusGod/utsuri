@@ -50,8 +50,17 @@ def test_an_image_keeps_upstream_rings_and_gains_more(png):
     r = rings_for([png])
     assert "PNG" not in labels(r, "Convert") and "JPG" in labels(r, "Convert")
     assert "Crop" in labels(r, "Tools")
-    assert {"≤ 500 KB", "No GPS", "Copy"} <= set(labels(r, "More"))
-    assert "Compress" not in labels(r, "More"), "upstream's Tools ring has it already"
+    assert {"Copy", "Text"} <= set(labels(r, "More"))
+    for twin in ("Compress", "≤ 500 KB", "1920 px", "1280 px", "No GPS"):  # the Tools ring does these
+        assert twin not in labels(r, "More"), twin
+
+
+def test_no_slice_does_a_job_twice_in_one_menu(png, pdf, tmp_path):
+    """No label twice, and no More preset for a job a Tools window does."""
+    for paths in ([png], [pdf], [pdf, pdf]):
+        r = rings_for(paths)
+        all_labels = [lbl for ring in r for lbl in labels(r, ring)]
+        assert len(all_labels) == len(set(all_labels)), all_labels
     assert "ZIP" in labels(r, "Pack")
 
 
