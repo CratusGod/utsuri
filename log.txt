@@ -1,0 +1,21 @@
+[   0.00] display :99 screen (1280, 800) cmd ['utsuri']
+[  17.09] PASS JPG → PNG                       10.0s  D-Photo.png · 2400×1600
+[  26.74] PASS JPG → WEBP                       9.1s  D-Photo.webp · 2400×1600
+[  37.71] PASS JPG → HEIC                      10.4s  D-Photo.heic · 2400×1600
+[  47.09] PASS JPG → PDF                        8.8s  D-Photo.pdf · 1 page(s)
+[  56.44] PASS PNG → JPG                        8.8s  D-Graphic.jpg · 800×533
+[  66.92] PASS PDF → JPG (3 pages)              9.9s  3 × .jpg
+[  76.27] PASS PDF → TXT                        8.8s  D-Report.txt
+[  85.61] PASS DOCX → PDF                       8.7s  D-Letter.pdf · 1 page(s)
+[  94.97] PASS TXT → PDF                        8.8s  D-Notes.pdf · 1 page(s)
+[ 105.19] PASS PDF Split                        9.6s  3 PDFs
+[ 115.44] PASS PDF Rotate                       9.7s  all pages at 90°
+[ 125.92] PASS PDF Compress                     9.9s  227 KB → 108 KB
+[ 137.19] PASS Merge 2 PDFs                    10.7s  5 pages
+[ 150.29] PASS Compress (window, Enter)        12.5s  354 KB → 112 KB · 69% smaller
+[ 163.39] PASS Resize 50% (window, Enter)      12.5s  2400×1600 → 1200×800
+[ 177.47] PASS Add BG (window, Enter)          13.5s  800×533 → 992×725
+[ 190.54] PASS Metadata: remove all (Enter)    12.5s  0 metadata fields left
+[ 204.62] PASS PDF Protect (password)          13.5s  AES-256, password works
+[ 213.89] PASS Open With → AVIF (click)         8.7s  D-Photo.avif · 2400×1600
+[ 214.00] DONE 19/19
