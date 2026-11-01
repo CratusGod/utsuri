@@ -1,0 +1,506 @@
+[
+ {
+  "name": "JPG \u2192 PNG",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Photo.png \u00b7 2400\u00d71600",
+  "seconds": 7.6,
+  "t": 7.6
+ },
+ {
+  "name": "JPG \u2192 WEBP",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Photo.webp \u00b7 2400\u00d71600",
+  "seconds": 5.3,
+  "t": 13.5
+ },
+ {
+  "name": "JPG \u2192 HEIC",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Photo.heic \u00b7 2400\u00d71600",
+  "seconds": 5.9,
+  "t": 20.1
+ },
+ {
+  "name": "JPG \u2192 TIFF",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Photo.tiff \u00b7 2400\u00d71600",
+  "seconds": 5.0,
+  "t": 25.7
+ },
+ {
+  "name": "JPG \u2192 AVIF",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Photo.avif \u00b7 2400\u00d71600",
+  "seconds": 5.5,
+  "t": 31.9
+ },
+ {
+  "name": "JPG \u2192 BMP",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Photo.bmp \u00b7 2400\u00d71600",
+  "seconds": 5.1,
+  "t": 37.5
+ },
+ {
+  "name": "JPG \u2192 PDF",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Photo.pdf \u00b7 1 page(s)",
+  "seconds": 5.1,
+  "t": 43.2
+ },
+ {
+  "name": "JPG \u2192 ICO",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Photo.ico \u00b7 128\u00d786",
+  "seconds": 5.0,
+  "t": 48.8
+ },
+ {
+  "name": "JPG \u2192 GIF",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Photo.gif \u00b7 2400\u00d71600",
+  "seconds": 5.3,
+  "t": 54.8
+ },
+ {
+  "name": "PNG \u2192 JPG",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Graphic.jpg \u00b7 800\u00d7533",
+  "seconds": 5.0,
+  "t": 60.4
+ },
+ {
+  "name": "PDF \u2192 JPG (3 pages)",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "3 \u00d7 .jpg",
+  "seconds": 5.1,
+  "t": 66.1
+ },
+ {
+  "name": "PDF \u2192 PNG (3 pages)",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "3 \u00d7 .png",
+  "seconds": 6.4,
+  "t": 73.1
+ },
+ {
+  "name": "PDF \u2192 DOCX",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Report.docx",
+  "seconds": 5.0,
+  "t": 78.7
+ },
+ {
+  "name": "PDF \u2192 TXT",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Report.txt",
+  "seconds": 5.0,
+  "t": 84.3
+ },
+ {
+  "name": "DOCX \u2192 PDF",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Letter.pdf \u00b7 1 page(s)",
+  "seconds": 5.0,
+  "t": 90.0
+ },
+ {
+  "name": "DOCX \u2192 TXT",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Letter.txt",
+  "seconds": 5.0,
+  "t": 95.6
+ },
+ {
+  "name": "TXT \u2192 PDF",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Notes.pdf \u00b7 1 page(s)",
+  "seconds": 5.0,
+  "t": 101.2
+ },
+ {
+  "name": "TXT \u2192 DOCX",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Notes.docx",
+  "seconds": 5.0,
+  "t": 106.8
+ },
+ {
+  "name": "2 images \u2192 1 PDF",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "2 images \u2192 2-page PDF",
+  "seconds": 6.5,
+  "t": 113.9
+ },
+ {
+  "name": "Compress to 200 KB",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "354 KB \u2192 184 KB (48% smaller)",
+  "seconds": 10.4,
+  "t": 125.0
+ },
+ {
+  "name": "Resize 50%",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "2400\u00d71600 \u2192 1200\u00d7800",
+  "seconds": 8.3,
+  "t": 133.8
+ },
+ {
+  "name": "Crop 1:1",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "2400\u00d71600 \u2192 1600\u00d71600",
+  "seconds": 8.8,
+  "t": 143.4
+ },
+ {
+  "name": "Edit: auto + rotate",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "2400\u00d71600 \u2192 1600\u00d72400",
+  "seconds": 9.8,
+  "t": 153.8
+ },
+ {
+  "name": "Annotate",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Photo Annotated.jpg",
+  "seconds": 10.9,
+  "t": 165.3
+ },
+ {
+  "name": "Redact",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Photo Redacted.jpg \u00b7 centre blacked out",
+  "seconds": 9.5,
+  "t": 175.4
+ },
+ {
+  "name": "Add BG 1:1",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "2400\u00d71600 \u2192 2976\u00d72976",
+  "seconds": 10.8,
+  "t": 186.8
+ },
+ {
+  "name": "Metadata: remove location",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "GPS removed, kept Apple iPhone 15 Pro",
+  "seconds": 7.6,
+  "t": 195.0
+ },
+ {
+  "name": "Metadata: remove all",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "0 metadata fields left",
+  "seconds": 7.7,
+  "t": 203.2
+ },
+ {
+  "name": "PDF Compress",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "227 KB \u2192 108 KB",
+  "seconds": 6.2,
+  "t": 210.0
+ },
+ {
+  "name": "PDF Split",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "3 PDFs",
+  "seconds": 6.2,
+  "t": 216.8
+ },
+ {
+  "name": "PDF Rotate",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "all pages at 90\u00b0",
+  "seconds": 6.1,
+  "t": 223.5
+ },
+ {
+  "name": "PDF Protect",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "AES-256, password works",
+  "seconds": 9.3,
+  "t": 233.4
+ },
+ {
+  "name": "PDF Extract images",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "1 image(s) in Report images/",
+  "seconds": 6.2,
+  "t": 240.5
+ },
+ {
+  "name": "PDF Metadata",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "author/title removed",
+  "seconds": 7.6,
+  "t": 248.7
+ },
+ {
+  "name": "Merge 2 PDFs",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "5 pages",
+  "seconds": 7.8,
+  "t": 257.0
+ },
+ {
+  "name": "More: Copy image",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "clipboard image 1200\u00d7900",
+  "seconds": 8.9,
+  "t": 266.6
+ },
+ {
+  "name": "More: Text (OCR)",
+  "where": "explorer",
+  "status": "FAIL",
+  "detail": "ValueError: 'Text' is not in list",
+  "seconds": 0.7,
+  "t": 267.9
+ },
+ {
+  "name": "More: PDF Gray",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Report Gray.pdf \u00b7 grayscale",
+  "seconds": 7.2,
+  "t": 275.8
+ },
+ {
+  "name": "More: Stamp in Vietnamese",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Report Watermarked.pdf \u00b7 on all 3 pages \u00b7 Vietnamese letters from Segoe UI Regular",
+  "seconds": 20.0,
+  "t": 296.3
+ },
+ {
+  "name": "Pack: ZIP",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Photo.zip holds Photo.jpg",
+  "seconds": 8.3,
+  "t": 305.3
+ },
+ {
+  "name": "Pack: TAR.GZ",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Notes.tar.gz holds Notes.txt",
+  "seconds": 7.2,
+  "t": 313.1
+ },
+ {
+  "name": "Extract archive, then Undo",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "extracted Graphic.png, readme.txt into Bundle/ \u00b7 Undo removed Bundle/",
+  "seconds": 7.4,
+  "t": 321.1
+ },
+ {
+  "name": "More: Translate in Oumu",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Oumu got the text (31 chars)",
+  "seconds": 7.8,
+  "t": 329.5
+ },
+ {
+  "name": "Vietnamese name: JPG \u2192 PNG",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "\u1ea2nh ch\u1ee5p.png \u00b7 900\u00d7600",
+  "seconds": 5.0,
+  "t": 335.1
+ },
+ {
+  "name": "3 files \u2192 one ZIP",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Archive.zip holds Graphic.png, Letter.docx, Notes.txt",
+  "seconds": 10.6,
+  "t": 346.3
+ },
+ {
+  "name": "Convert, then Undo",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "Second.webp \u00b7 1200\u00d7900 \u00b7 Undo removed Second.webp",
+  "seconds": 6.7,
+  "t": 353.6
+ },
+ {
+  "name": "Video \u2192 GIF",
+  "where": "explorer",
+  "status": "FAIL",
+  "detail": "KeyError: 'Convert'",
+  "seconds": 0.7,
+  "t": 354.9
+ },
+ {
+  "name": "Video \u2192 WEBM",
+  "where": "explorer",
+  "status": "FAIL",
+  "detail": "KeyError: 'Convert'",
+  "seconds": 0.7,
+  "t": 356.2
+ },
+ {
+  "name": "Video \u2192 MP3",
+  "where": "explorer",
+  "status": "FAIL",
+  "detail": "KeyError: 'Convert'",
+  "seconds": 0.7,
+  "t": 357.5
+ },
+ {
+  "name": "Video Compress",
+  "where": "explorer",
+  "status": "FAIL",
+  "detail": "KeyError: 'More'",
+  "seconds": 0.7,
+  "t": 358.8
+ },
+ {
+  "name": "Send To \u2192 PNG",
+  "where": "send-to",
+  "status": "PASS",
+  "detail": "Photo.png \u00b7 2400\u00d71600",
+  "seconds": 5.3,
+  "t": 364.7
+ },
+ {
+  "name": "Desktop: JPG \u2192 PNG",
+  "where": "desktop",
+  "status": "PASS",
+  "detail": "D-Photo.png \u00b7 2400\u00d71600",
+  "seconds": 5.5,
+  "t": 370.2
+ },
+ {
+  "name": "Desktop: PDF \u2192 TXT",
+  "where": "desktop",
+  "status": "PASS",
+  "detail": "D-Report.txt",
+  "seconds": 4.9,
+  "t": 375.7
+ },
+ {
+  "name": "Desktop: DOCX \u2192 PDF",
+  "where": "desktop",
+  "status": "PASS",
+  "detail": "D-Letter.pdf \u00b7 1 page(s)",
+  "seconds": 4.9,
+  "t": 381.2
+ },
+ {
+  "name": "Desktop: Compress",
+  "where": "desktop",
+  "status": "PASS",
+  "detail": "354 KB \u2192 184 KB (48% smaller)",
+  "seconds": 9.9,
+  "t": 391.7
+ },
+ {
+  "name": "Desktop: Crop",
+  "where": "desktop",
+  "status": "PASS",
+  "detail": "2400\u00d71600 \u2192 1600\u00d71600",
+  "seconds": 8.6,
+  "t": 400.9
+ },
+ {
+  "name": "Desktop: Add BG",
+  "where": "desktop",
+  "status": "PASS",
+  "detail": "800\u00d7533 \u2192 992\u00d7992",
+  "seconds": 9.2,
+  "t": 410.7
+ },
+ {
+  "name": "Desktop: 2 PDFs merge",
+  "where": "desktop",
+  "status": "PASS",
+  "detail": "5 pages",
+  "seconds": 7.2,
+  "t": 418.5
+ },
+ {
+  "name": "Desktop: Pack ZIP",
+  "where": "desktop",
+  "status": "PASS",
+  "detail": "D-Photo.zip holds D-Photo.jpg",
+  "seconds": 8.1,
+  "t": 427.3
+ },
+ {
+  "name": "Desktop: Extract, then Undo",
+  "where": "desktop",
+  "status": "FAIL",
+  "detail": "AssertionError: Bundle still there after Undo",
+  "seconds": 15.4,
+  "t": 443.3
+ },
+ {
+  "name": "Desktop: Video \u2192 GIF",
+  "where": "desktop",
+  "status": "FAIL",
+  "detail": "KeyError: 'Convert'",
+  "seconds": 0.7,
+  "t": 444.6
+ },
+ {
+  "name": "Colour themes",
+  "where": "explorer",
+  "status": "PASS",
+  "detail": "8 themes, all distinct (closest: Catppuccin Macchiato / Tokyo Night Storm, 1.9) \u00b7 shots/theme_*.png",
+  "seconds": 80.3,
+  "t": 526.2
+ },
+ {
+  "name": "Drag picture kept out of the glass",
+  "where": "all",
+  "status": "PASS",
+  "detail": "hidden during 59 menu captures",
+  "seconds": 0,
+  "t": 0
+ }
+]

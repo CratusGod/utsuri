@@ -1,0 +1,85 @@
+
+==== Utsuri 1.1.0 started 2026-11-01 17:13:11 ====
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+Windows fatal exception: code 0x8001010d
+
+Current thread 0x00001598 (most recent call first):
+  File "D:\a\utsuri\utsuri\utsuri\app.py", line 525 in main
+  File "D:\a\utsuri\utsuri\utsuri\__main__.py", line 10 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 198 in _run_module_as_main
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+IPC: 1 file(s) handed over
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 376x71
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 376x71
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 376x71
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 376x71
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 376x71
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 376x71
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 376x71
+
+==== Utsuri 1.1.0 started 2026-11-01 17:20:49 ====
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+
+==== Utsuri 1.1.0 started 2026-11-01 17:20:59 ====
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+
+==== Utsuri 1.1.0 started 2026-11-01 17:21:09 ====
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+
+==== Utsuri 1.1.0 started 2026-11-01 17:21:19 ====
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+
+==== Utsuri 1.1.0 started 2026-11-01 17:21:29 ====
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+
+==== Utsuri 1.1.0 started 2026-11-01 17:21:39 ====
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+
+==== Utsuri 1.1.0 started 2026-11-01 17:21:49 ====
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130
+
+==== Utsuri 1.1.0 started 2026-11-01 17:21:59 ====
+menu: hid 1 drag image(s) during capture: SysDragImage ex=0x000800a8 390x130

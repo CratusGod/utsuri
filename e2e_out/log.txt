@@ -1,0 +1,127 @@
+[   0.00] ChangeDisplaySettings -> 0
+[   7.58] PASS explorer JPG → PNG                            7.6s  Photo.png · 2400×1600
+[  13.53] PASS explorer JPG → WEBP                           5.3s  Photo.webp · 2400×1600
+[  20.07] PASS explorer JPG → HEIC                           5.9s  Photo.heic · 2400×1600
+[  25.71] PASS explorer JPG → TIFF                           5.0s  Photo.tiff · 2400×1600
+[  31.86] PASS explorer JPG → AVIF                           5.5s  Photo.avif · 2400×1600
+[  37.53] PASS explorer JPG → BMP                            5.1s  Photo.bmp · 2400×1600
+[  43.20] PASS explorer JPG → PDF                            5.1s  Photo.pdf · 1 page(s)
+[  48.84] PASS explorer JPG → ICO                            5.0s  Photo.ico · 128×86
+[  54.76] PASS explorer JPG → GIF                            5.3s  Photo.gif · 2400×1600
+[  60.37] PASS explorer PNG → JPG                            5.0s  Graphic.jpg · 800×533
+[  66.09] PASS explorer PDF → JPG (3 pages)                  5.1s  3 × .jpg
+[  73.07] PASS explorer PDF → PNG (3 pages)                  6.4s  3 × .png
+[  78.71] PASS explorer PDF → DOCX                           5.0s  Report.docx
+[  84.33] PASS explorer PDF → TXT                            5.0s  Report.txt
+[  89.97] PASS explorer DOCX → PDF                           5.0s  Letter.pdf · 1 page(s)
+[  95.57] PASS explorer DOCX → TXT                           5.0s  Letter.txt
+[ 101.21] PASS explorer TXT → PDF                            5.0s  Notes.pdf · 1 page(s)
+[ 106.84] PASS explorer TXT → DOCX                           5.0s  Notes.docx
+[ 113.95] PASS explorer 2 images → 1 PDF                     6.5s  2 images → 2-page PDF
+[ 124.99] PASS explorer Compress to 200 KB                  10.4s  354 KB → 184 KB (48% smaller)
+[ 133.84] PASS explorer Resize 50%                           8.3s  2400×1600 → 1200×800
+[ 143.35] PASS explorer Crop 1:1                             8.8s  2400×1600 → 1600×1600
+[ 153.76] PASS explorer Edit: auto + rotate                  9.8s  2400×1600 → 1600×2400
+[ 165.30] PASS explorer Annotate                            10.9s  Photo Annotated.jpg
+[ 175.38] PASS explorer Redact                               9.5s  Photo Redacted.jpg · centre blacked out
+[ 186.78] PASS explorer Add BG 1:1                          10.8s  2400×1600 → 2976×2976
+[ 194.98] PASS explorer Metadata: remove location            7.6s  GPS removed, kept Apple iPhone 15 Pro
+[ 203.24] PASS explorer Metadata: remove all                 7.7s  0 metadata fields left
+[ 210.03] PASS explorer PDF Compress                         6.2s  227 KB → 108 KB
+[ 216.79] PASS explorer PDF Split                            6.2s  3 PDFs
+[ 223.51] PASS explorer PDF Rotate                           6.1s  all pages at 90°
+[ 233.41] PASS explorer PDF Protect                          9.3s  AES-256, password works
+[ 240.45] PASS explorer PDF Extract images                   6.2s  1 image(s) in Report images/
+[ 248.69] PASS explorer PDF Metadata                         7.6s  author/title removed
+[ 257.04] PASS explorer Merge 2 PDFs                         7.8s  5 pages
+[ 266.58] PASS explorer More: Copy image                     8.9s  clipboard image 1200×900
+[ 267.20] Traceback (most recent call last):
+  File "D:\a\utsuri\utsuri\demo\e2e_windows.py", line 230, in run
+    ring_i, idx, n = ring_index(order, ring, label)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\a\utsuri\utsuri\demo\e2e_windows.py", line 206, in ring_index
+    return names.index(ring), labels.index(label), len(items)
+                              ^^^^^^^^^^^^^^^^^^^
+ValueError: 'Text' is not in list
+
+[ 267.92] FAIL explorer More: Text (OCR)                     0.7s  ValueError: 'Text' is not in list
+[ 275.75] PASS explorer More: PDF Gray                       7.2s  Report Gray.pdf · grayscale
+[ 296.35] PASS explorer More: Stamp in Vietnamese           20.0s  Report Watermarked.pdf · on all 3 pages · Vietnamese letters from Segoe UI Regular
+[ 305.26] PASS explorer Pack: ZIP                            8.3s  Photo.zip holds Photo.jpg
+[ 313.08] PASS explorer Pack: TAR.GZ                         7.2s  Notes.tar.gz holds Notes.txt
+[ 321.06] PASS explorer Extract archive, then Undo           7.4s  extracted Graphic.png, readme.txt into Bundle/ · Undo removed Bundle/
+[ 329.48] PASS explorer More: Translate in Oumu              7.8s  Oumu got the text (31 chars)
+[ 335.09] PASS explorer Vietnamese name: JPG → PNG           5.0s  Ảnh chụp.png · 900×600
+[ 346.31] PASS explorer 3 files → one ZIP                   10.6s  Archive.zip holds Graphic.png, Letter.docx, Notes.txt
+[ 353.61] PASS explorer Convert, then Undo                   6.7s  Second.webp · 1200×900 · Undo removed Second.webp
+[ 354.22] Traceback (most recent call last):
+  File "D:\a\utsuri\utsuri\demo\e2e_windows.py", line 230, in run
+    ring_i, idx, n = ring_index(order, ring, label)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\a\utsuri\utsuri\demo\e2e_windows.py", line 204, in ring_index
+    items = rings[ring]
+            ~~~~~^^^^^^
+KeyError: 'Convert'
+
+[ 354.90] FAIL explorer Video → GIF                          0.7s  KeyError: 'Convert'
+[ 355.51] Traceback (most recent call last):
+  File "D:\a\utsuri\utsuri\demo\e2e_windows.py", line 230, in run
+    ring_i, idx, n = ring_index(order, ring, label)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\a\utsuri\utsuri\demo\e2e_windows.py", line 204, in ring_index
+    items = rings[ring]
+            ~~~~~^^^^^^
+KeyError: 'Convert'
+
+[ 356.19] FAIL explorer Video → WEBM                         0.7s  KeyError: 'Convert'
+[ 356.81] Traceback (most recent call last):
+  File "D:\a\utsuri\utsuri\demo\e2e_windows.py", line 230, in run
+    ring_i, idx, n = ring_index(order, ring, label)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\a\utsuri\utsuri\demo\e2e_windows.py", line 204, in ring_index
+    items = rings[ring]
+            ~~~~~^^^^^^
+KeyError: 'Convert'
+
+[ 357.49] FAIL explorer Video → MP3                          0.7s  KeyError: 'Convert'
+[ 358.11] Traceback (most recent call last):
+  File "D:\a\utsuri\utsuri\demo\e2e_windows.py", line 230, in run
+    ring_i, idx, n = ring_index(order, ring, label)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\a\utsuri\utsuri\demo\e2e_windows.py", line 204, in ring_index
+    items = rings[ring]
+            ~~~~~^^^^^^
+KeyError: 'More'
+
+[ 358.80] FAIL explorer Video Compress                       0.7s  KeyError: 'More'
+[ 364.69] PASS send-to  Send To → PNG                        5.3s  Photo.png · 2400×1600
+[ 370.16] PASS desktop  Desktop: JPG → PNG                   5.5s  D-Photo.png · 2400×1600
+[ 375.69] PASS desktop  Desktop: PDF → TXT                   4.9s  D-Report.txt
+[ 381.18] PASS desktop  Desktop: DOCX → PDF                  4.9s  D-Letter.pdf · 1 page(s)
+[ 391.71] PASS desktop  Desktop: Compress                    9.9s  354 KB → 184 KB (48% smaller)
+[ 400.91] PASS desktop  Desktop: Crop                        8.6s  2400×1600 → 1600×1600
+[ 410.69] PASS desktop  Desktop: Add BG                      9.2s  800×533 → 992×992
+[ 418.53] PASS desktop  Desktop: 2 PDFs merge                7.2s  5 pages
+[ 427.27] PASS desktop  Desktop: Pack ZIP                    8.1s  D-Photo.zip holds D-Photo.jpg
+[ 442.62] Traceback (most recent call last):
+  File "D:\a\utsuri\utsuri\demo\e2e_windows.py", line 277, in run
+    msg = f"{msg} · {after(outs, folder, before)}"
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\a\utsuri\utsuri\demo\e2e_windows.py", line 708, in undo_and_check
+    assert not top.exists(), f"{top.name} still there after Undo"
+           ^^^^^^^^^^^^^^^^
+AssertionError: Bundle still there after Undo
+
+[ 443.30] FAIL desktop  Desktop: Extract, then Undo         15.4s  AssertionError: Bundle still there after Undo
+[ 443.92] Traceback (most recent call last):
+  File "D:\a\utsuri\utsuri\demo\e2e_windows.py", line 230, in run
+    ring_i, idx, n = ring_index(order, ring, label)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\a\utsuri\utsuri\demo\e2e_windows.py", line 204, in ring_index
+    items = rings[ring]
+            ~~~~~^^^^^^
+KeyError: 'Convert'
+
+[ 444.59] FAIL desktop  Desktop: Video → GIF                 0.7s  KeyError: 'Convert'
+[ 526.24] PASS explorer Colour themes                       80.3s  8 themes, all distinct (closest: Catppuccin Macchiato / Tokyo Night Storm, 1.9) · shots/theme_*.png
+[ 527.73] DONE 56/63 passed
