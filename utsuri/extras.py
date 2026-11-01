@@ -110,6 +110,16 @@ def ocr_langs() -> list[str]:
 def ocr(src: Path, lang: str, open_image, sibling, copy: bool = True) -> tuple[Path, str]:
     """Read the text in an image, save it as "<name> Text.txt" and (with copy) put it
     on the clipboard through wl-copy. The desktop app copies through Qt instead."""
+    text = ocr_text(src, lang, open_image)
+    out = sibling(src, "Text", ".txt")
+    out.write_text(text + "\n", encoding="utf-8")
+    if copy:
+        _wl_copy(text.encode(), "text/plain;charset=utf-8")
+    return out, text
+
+
+def ocr_text(src: Path, lang: str, open_image) -> str:
+    """The text in an image (no file written)."""
     if not LANG_RE.match(lang):   # before anything else: the codes reach a command line
         raise ExtrasError(f"'{lang}' isn't a valid OCR language (use codes like eng or eng+vie)")
     exe = _need_tesseract()
@@ -129,8 +139,4 @@ def ocr(src: Path, lang: str, open_image, sibling, copy: bool = True) -> tuple[P
         raise ExtrasError(f"tesseract failed: {(r.stderr.strip().splitlines() or ['no output'])[-1]}")
     if not text:
         raise ExtrasError("No text found in this image")
-    out = sibling(src, "Text", ".txt")
-    out.write_text(text + "\n", encoding="utf-8")
-    if copy:
-        _wl_copy(text.encode(), "text/plain;charset=utf-8")
-    return out, text
+    return text

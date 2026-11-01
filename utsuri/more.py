@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from . import archive, cli, extras, media, report
+from . import archive, cli, extras, media, oumu_link, report
 from .radial import Item
 
 MAX_SLICES = 8
@@ -64,6 +64,8 @@ def rings(paths: list[str]) -> dict[str, list[Item]]:
         more.insert(0, _slice("compress", "Compress"))
     if cat == "pdf":
         more = [Item(v[0], key=f"xw:{k}", hint=v[1]) for k, v in PDF_WINDOWS.items()] + more
+    if (cat in ("text", "docx", "pdf") or (cat == "image" and _ocr_ready())) and oumu_link.available():
+        more.append(Item("Translate", key="x:translate", hint="Opens in Oumu"))
     # Spread evenly over as few rings as fit: 9 slices -> 5 + 4, never 8 + 1.
     n_rings = -(-len(more) // MAX_SLICES)
     per = -(-len(more) // n_rings) if n_rings else 0
@@ -101,6 +103,18 @@ def job(key: str, paths: list[str], copy_text, copy_image):
             copy_image(files[0])
             return report.Result("Image copied", files[0].name, [], files)
         return run_copy_image
+    if tid == "translate":
+        def run_translate():
+            ocr = lambda p: extras.ocr_text(p, cli.OPTIONS["ocr_lang"], cli.convert.open_image)  # noqa: E731
+            try:
+                text = "\n\n".join(oumu_link.text_of(f, ocr) for f in files)
+                text, cut = oumu_link.clip(text)
+                oumu_link.send(text)
+            except oumu_link.OumuError as e:
+                raise cli.Refusal(str(e)) from None
+            name = files[0].name if len(files) == 1 else f"{len(files)} files"
+            return report.Result("Sent to Oumu", f"{name}{' · the first part' if cut else ''} · translating", [], files)
+        return run_translate
     if tid == "ocr":
         def run_ocr():
             out, text = extras.ocr(files[0], cli.OPTIONS["ocr_lang"], cli.convert.open_image, cli.util.sibling,
