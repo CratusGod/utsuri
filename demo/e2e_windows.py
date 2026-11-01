@@ -794,6 +794,42 @@ def _image_distance(a, b) -> float:
     return sum(abs(x - y) for p, q in zip(pa, pb) for x, y in zip(p, q)) / (len(pa) * 3)
 
 
+# ------------------------------------------------------------------ Translate with Oumu
+OUMU_GOT: list[bytes] = []
+
+
+def start_fake_oumu():
+    """Stand in for Oumu: listen on a test pipe (OUMU_PIPE, which the app inherits) and
+    keep every request. The Translate slice shows only while such a pipe exists."""
+    import threading
+    import uuid
+    from multiprocessing.connection import Listener
+    name = f"\\\\.\\pipe\\oumu-e2e-{uuid.uuid4().hex[:8]}"
+    os.environ["OUMU_PIPE"] = name
+    listener = Listener(address=name, family="AF_PIPE")
+
+    def serve():
+        while True:
+            try:
+                with listener.accept() as conn:
+                    OUMU_GOT.append(conn.recv_bytes())
+            except Exception:
+                time.sleep(0.2)
+    threading.Thread(target=serve, daemon=True).start()
+
+
+def v_sent_to_oumu(expected_text):
+    def v(outs, srcs):
+        end = time.time() + 5
+        while time.time() < end and not OUMU_GOT:
+            time.sleep(0.2)
+        assert OUMU_GOT, "Oumu got nothing"
+        got = OUMU_GOT.pop().decode("utf-8")
+        assert got == "translate\n" + expected_text, f"Oumu got {got[:80]!r}"
+        return f"Oumu got the text ({len(expected_text)} chars)"
+    return v
+
+
 # ------------------------------------------------------------------ IPC / Send To path
 def run_ipc(name: str, file: str, label: str, verify):
     """Launch a second copy with a file (what 'Send to' / right-click does) → menu → click."""
@@ -854,6 +890,7 @@ def main():
     shutil.rmtree(STASH, ignore_errors=True)
     make_files(EXP)
     make_files(DESK, "D-")
+    start_fake_oumu()  # before the app starts: it inherits OUMU_PIPE
     app = wk.start_app()
     time.sleep(5)
     EX = wk.open_explorer(EXP)
@@ -910,6 +947,8 @@ def main():
         run("Pack: TAR.GZ", "explorer", ["Notes.txt"], "Pack", "TAR.GZ", v_tar)
         run("Extract archive, then Undo", "explorer", ["Bundle.zip"], "More", "Extract", v_extracted,
             after=undo_and_check)
+        run("More: Translate in Oumu", "explorer", ["Notes.txt"], "More", "Translate",
+            v_sent_to_oumu("Shopping list\n- coffee\n- limes\n"), expect_files=False)
         # ---- names and selections people really have
         run("Vietnamese name: JPG → PNG", "explorer", ["Ảnh chụp.jpg"], "Convert", "PNG", v_format("PNG", ".png"))
         run("3 files → one ZIP", "explorer", ["Notes.txt", "Letter.docx", "Graphic.png"], "Pack", "ZIP",
