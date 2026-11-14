@@ -80,8 +80,7 @@ const LEDGER_KEEP: usize = 100;
 fn ledger() -> PathBuf {
     let base = std::env::var_os("UTSURI_STATE_DIR")
         .map(PathBuf::from)
-        .or_else(|| std::env::var_os("LOCALAPPDATA").map(|d| PathBuf::from(d).join("Utsuri-rs")))
-        .unwrap_or_else(std::env::temp_dir);
+        .unwrap_or_else(|| shared::paths::state_dir("Utsuri-rs"));
     base.join("created-dirs")
 }
 

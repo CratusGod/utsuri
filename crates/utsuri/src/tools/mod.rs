@@ -37,6 +37,10 @@ pub fn name(p: &Path) -> String {
 
 /// Windows 11 rounds the frameless window and draws its thin border (a popup window gets
 /// square corners unless it asks).
+#[cfg(not(windows))]
+fn round_corners(_h: &rune::WindowHandle) {}
+
+#[cfg(windows)]
 fn round_corners(h: &rune::WindowHandle) {
     let _ = h.with_raw_handle(|raw| {
         use raw_window_handle::RawWindowHandle;
@@ -143,6 +147,7 @@ pub fn headless_windows() -> Vec<rune::AnyWindowSpec> {
 /// A tool window opens in front with the keyboard: it is opened from a drop or a tray click,
 /// which Windows doesn't count as the user choosing that window.
 pub(crate) fn bring_to_front(h: &rune::WindowHandle) {
+    #[cfg(windows)]
     let _ = h.with_raw_handle(|raw| {
         use raw_window_handle::RawWindowHandle;
         if let RawWindowHandle::Win32(w) = raw.as_raw() {
@@ -157,7 +162,15 @@ pub(crate) fn bring_to_front(h: &rune::WindowHandle) {
     h.focus();
 }
 
+/// Linux: Wayland doesn't say which window has the keyboard; a new window gets it from the
+/// compositor (xdg-activation) or not at all, so there is nothing to retry.
+#[cfg(not(windows))]
+pub(crate) fn is_front(_h: &rune::WindowHandle) -> bool {
+    true
+}
+
 /// The window is the one the user is typing into.
+#[cfg(windows)]
 pub(crate) fn is_front(h: &rune::WindowHandle) -> bool {
     h.with_raw_handle(|raw| {
         use raw_window_handle::RawWindowHandle;

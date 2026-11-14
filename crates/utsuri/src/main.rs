@@ -1,4 +1,4 @@
-//! Utsuri (Rust, Windows): start dragging a file, press Shift, drop it on a slice.
+//! Utsuri (Rust; Windows and Linux): start dragging a file, press Shift, drop it on a slice.
 //! Ported from the Python app's app.py; the file work lives in utsuri-engine. The UI is Rune:
 //! a windowless app (`Hub`, the logic) with two overlays (the radial menu and the
 //! notifications) and a window per tool.
@@ -6,11 +6,29 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod cli;
-mod droptarget;
+#[cfg(windows)]
 mod crash;
+#[cfg(not(windows))]
+#[path = "linux/crash.rs"]
+mod crash;
+#[cfg(windows)]
+mod droptarget;
+#[cfg(not(windows))]
+#[path = "linux/droptarget.rs"]
+mod droptarget;
 mod headless;
+#[cfg(windows)]
 mod ipc;
+#[cfg(not(windows))]
+#[path = "linux/ipc.rs"]
+mod ipc;
+#[cfg(target_os = "linux")]
+mod linux;
 mod settings;
+#[cfg(windows)]
+mod shell;
+#[cfg(not(windows))]
+#[path = "linux/shell.rs"]
 mod shell;
 mod tools;
 mod trigger;
@@ -62,7 +80,7 @@ impl log::Log for FileLog {
 }
 
 pub fn log_dir() -> PathBuf {
-    std::env::var_os("LOCALAPPDATA").map(PathBuf::from).unwrap_or_else(std::env::temp_dir).join("Utsuri-rs")
+    shared::paths::state_dir("Utsuri-rs")
 }
 
 fn init_log() {
@@ -152,7 +170,15 @@ pub fn icon_rgba(side: u32) -> Vec<u8> {
     im.resize_exact(side, side, image::imageops::FilterType::Lanczos3).to_rgba8().into_raw()
 }
 
+/// Linux: pointer and placement both use the compositor's layout px, which are already
+/// points, so nothing is scaled.
+#[cfg(not(windows))]
+fn scale_at(_x: i32, _y: i32) -> f32 {
+    1.0
+}
+
 /// Physical px per point on the monitor at a point.
+#[cfg(windows)]
 fn scale_at(x: i32, y: i32) -> f32 {
     use windows::Win32::Foundation::POINT;
     use windows::Win32::Graphics::Gdi::{MONITOR_DEFAULTTONEAREST, MonitorFromPoint};
@@ -233,6 +259,11 @@ impl Hub {
         });
         ov.set_placement(Some(OverlayPlacement::Rect { x: x as f32 / scale, y: y as f32 / scale, width: ui::menu::SIZE, height: ui::menu::SIZE }));
         ov.show();
+        // Wayland: an invisible surface over the menu takes the drag (Rune's overlays can't)
+        #[cfg(target_os = "linux")]
+        if !click_mode {
+            linux::dnd::show(x, y, side, side);
+        }
         if click_mode {
             ov.request_keys();
         }
@@ -247,6 +278,8 @@ impl Hub {
             ov.hide();
             ov.update(|m, _| m.visible = false);
         }
+        #[cfg(target_os = "linux")]
+        linux::dnd::hide();
         self.menu.visible = false;
         self.menu.hide_at = None;
     }
@@ -750,6 +783,7 @@ fn main() -> Result<()> {
     if args.iter().any(|a| a == "--unregister-shell") {
         return shell::uninstall_shell_menu(&suffix_after("--unregister-shell"));
     }
+    #[cfg(windows)]
     if args.iter().any(|a| a == "--uninstall") {
         let o = install::Opts::from_args(&args[1..]);
         let suffix = o.suffix.clone();
@@ -836,6 +870,26 @@ fn main() -> Result<()> {
             }
         });
     });
+    #[cfg(target_os = "linux")]
+    {
+        let me5 = me.clone();
+        linux::dnd::start(move |d| {
+            me5.update(move |h, tx| match d {
+                linux::dnd::Drag::Entered(files) => h.menu_drag_entered(files),
+                linux::dnd::Drag::Dropped(files) => {
+                    for f in &files {
+                        log::debug!("dropped: {}", f.display());
+                    }
+                    h.menu_dropped(files, tx)
+                }
+            });
+        });
+        if !linux::keys::readable() {
+            me.update(|h, _| {
+                h.push_toast(Body::Info { title: "Utsuri can't see the keyboard".into(), msg: "Add yourself to the input group (sudo usermod -aG input $USER) and sign in again.".into() });
+            });
+        }
+    }
     log::info!("ready (pipe {})", ipc::pipe_name());
     // finding ffmpeg and Tesseract starts programs (half a second): do it now, off the UI
     // thread, not during the first drag

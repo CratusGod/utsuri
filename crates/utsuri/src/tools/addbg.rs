@@ -32,7 +32,31 @@ fn color(c: [u8; 3]) -> Color {
     col_of(Rgba(c[0], c[1], c[2], 255))
 }
 
+/// Linux: zenity's colour dialog (GTK), when installed.
+#[cfg(not(windows))]
+fn pick_color(start: [u8; 3]) -> Option<[u8; 3]> {
+    let init = format!("rgb({},{},{})", start[0], start[1], start[2]);
+    let out = std::process::Command::new("zenity").args(["--color-selection", "--show-palette", "--title=Background colour", "--color", &init]).stdin(std::process::Stdio::null()).output().ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    parse_rgb(String::from_utf8_lossy(&out.stdout).trim())
+}
+
+/// "rgb(1,2,3)", "rgba(1,2,3,0.5)" or "#rrggbb".
+#[cfg(not(windows))]
+fn parse_rgb(s: &str) -> Option<[u8; 3]> {
+    if let Some(hex) = s.strip_prefix('#') {
+        let v = u32::from_str_radix(hex.get(..6)?, 16).ok()?;
+        return Some([(v >> 16) as u8, (v >> 8) as u8, v as u8]);
+    }
+    let inner = s.split_once('(')?.1.trim_end_matches(')');
+    let mut it = inner.split(',').map(|p| p.trim().parse::<f32>().ok().map(|v| v.round().clamp(0.0, 255.0) as u8));
+    Some([it.next()??, it.next()??, it.next()??])
+}
+
 /// Windows' own colour dialog (modal, owned by the active window).
+#[cfg(windows)]
 fn pick_color(start: [u8; 3]) -> Option<[u8; 3]> {
     use windows::Win32::Foundation::COLORREF;
     use windows::Win32::UI::Controls::Dialogs::{CC_FULLOPEN, CC_RGBINIT, CHOOSECOLORW, ChooseColorW};

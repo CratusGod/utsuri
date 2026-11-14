@@ -69,6 +69,13 @@ impl<T> ToolS<T> {
 
 /// Start resizing from the bottom-right corner, as a native frame would (the window is
 /// frameless): the active window is ours, since its grip was just pressed.
+/// Linux: the compositor resizes (Super + right drag on Hyprland); the grip is inert.
+#[cfg(not(windows))]
+fn start_resize() {
+    log::debug!("resize grip: use the compositor's resize");
+}
+
+#[cfg(windows)]
 fn start_resize() {
     use windows::Win32::Foundation::{LPARAM, WPARAM};
     use windows::Win32::UI::Input::KeyboardAndMouse::{GetActiveWindow, ReleaseCapture};

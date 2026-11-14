@@ -3,9 +3,6 @@
 //! admin rights and can't stall the system the way a broken hook can.
 //! Ported from utsuri/trigger.py.
 
-use windows::Win32::Foundation::POINT;
-use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_CONTROL, VK_ESCAPE, VK_LBUTTON, VK_MENU, VK_SHIFT};
-use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
 
 /// Pixels the mouse must travel with the button held.
 pub const DRAG_THRESHOLD: i32 = 10;
@@ -43,11 +40,34 @@ pub struct Raw {
     pub pos: (i32, i32),
 }
 
+#[cfg(windows)]
 pub fn sample() -> Raw {
+    use windows::Win32::Foundation::POINT;
+    use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_CONTROL, VK_ESCAPE, VK_LBUTTON, VK_MENU, VK_SHIFT};
+    use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
     let down = |vk: u16| unsafe { GetAsyncKeyState(vk as i32) as u16 & 0x8000 != 0 };
     let mut p = POINT::default();
     let _ = unsafe { GetCursorPos(&mut p) };
     Raw { lbtn: down(VK_LBUTTON.0), shift: down(VK_SHIFT.0), ctrl: down(VK_CONTROL.0), alt: down(VK_MENU.0), esc: down(VK_ESCAPE.0), pos: (p.x, p.y) }
+}
+
+/// Linux: keys and the button from evdev; the pointer from the compositor, asked only
+/// while the button is down or the menu may be up (an IPC round trip every 15 ms otherwise).
+#[cfg(not(windows))]
+pub fn sample() -> Raw {
+    use std::sync::Mutex;
+    static LAST: Mutex<(i32, i32)> = Mutex::new((0, 0));
+    static WAS_DOWN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+    let h = crate::linux::keys::held();
+    let was = WAS_DOWN.swap(h.lbtn, std::sync::atomic::Ordering::Relaxed);
+    let pos = if h.lbtn || was {
+        let p = crate::shell::cursor();
+        *LAST.lock().unwrap() = p;
+        p
+    } else {
+        *LAST.lock().unwrap()
+    };
+    Raw { lbtn: h.lbtn, shift: h.shift, ctrl: h.ctrl, alt: h.alt, esc: h.esc, pos }
 }
 
 impl Raw {

@@ -1,4 +1,5 @@
-//! User settings, saved as JSON in %APPDATA%\Utsuri-rs\settings.json.
+//! User settings, saved as JSON in %APPDATA%\Utsuri-rs\settings.json (Windows) or
+//! ~/.config/Utsuri-rs/settings.json.
 //! Same options as the Python app's settings.py.
 
 use serde::{Deserialize, Serialize};
@@ -42,7 +43,7 @@ fn path() -> PathBuf {
     if let Some(p) = std::env::var_os("UTSURI_SETTINGS") {
         return PathBuf::from(p);
     }
-    std::env::var_os("APPDATA").map(PathBuf::from).unwrap_or_else(std::env::temp_dir).join("Utsuri-rs").join("settings.json")
+    shared::paths::config_dir("Utsuri-rs").join("settings.json")
 }
 
 impl Settings {
