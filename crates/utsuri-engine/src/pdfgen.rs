@@ -14,7 +14,6 @@ use krilla::image::Image;
 use krilla::page::PageSettings;
 use krilla::paint::{Fill, Stroke};
 use krilla::text::{Font, TextDirection};
-use std::path::PathBuf;
 use std::sync::OnceLock;
 
 /// Images are placed at this resolution (as the Python app did).
@@ -22,11 +21,7 @@ pub const IMAGE_DPI: f32 = 150.0;
 const LETTER: (f32, f32) = (612.0, 792.0);
 const MARGIN: f32 = 54.0;
 
-fn fonts_dir() -> PathBuf {
-    std::env::var_os("WINDIR").map(PathBuf::from).unwrap_or_else(|| PathBuf::from(r"C:\Windows")).join("Fonts")
-}
-
-/// A font from Windows, with its metrics for line breaking.
+/// A system font (`crate::fonts`), with its metrics for line breaking.
 #[derive(Clone)]
 struct Face {
     font: Font,
@@ -36,7 +31,7 @@ struct Face {
 impl Face {
     fn load(names: &[&str]) -> Result<Face> {
         for n in names {
-            if let Ok(bytes) = std::fs::read(fonts_dir().join(n)) {
+            if let Some(bytes) = crate::fonts::read(n) {
                 let data = std::sync::Arc::new(bytes);
                 if let Some(font) = Font::new(data.clone().into(), 0) {
                     return Ok(Face { font, data });

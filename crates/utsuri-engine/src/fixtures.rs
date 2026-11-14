@@ -159,18 +159,18 @@ pub fn write_all(dir: &Path) -> Result<Vec<PathBuf>> {
     out.push(zip_named);
     // video and audio (needs ffmpeg)
     if let Some(exe) = crate::media::ffmpeg() {
-        use std::os::windows::process::CommandExt;
+        use crate::proc::Quiet as _;
         let clip = p("clip.mp4");
         let ok = std::process::Command::new(&exe)
             .args(["-nostdin", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "testsrc=duration=2:size=320x240:rate=15", "-f", "lavfi", "-i", "sine=frequency=440:duration=2", "-shortest", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac"])
             .arg(&clip)
-            .creation_flags(0x0800_0000)
+            .quiet()
             .status()?
             .success();
         if ok {
             out.push(clip.clone());
             let song = p("song.wav");
-            if std::process::Command::new(&exe).args(["-nostdin", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "sine=frequency=330:duration=2"]).arg(&song).creation_flags(0x0800_0000).status()?.success() {
+            if std::process::Command::new(&exe).args(["-nostdin", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "sine=frequency=330:duration=2"]).arg(&song).quiet().status()?.success() {
                 out.push(song);
             }
         }

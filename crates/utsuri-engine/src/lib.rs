@@ -7,6 +7,7 @@ pub mod annotate;
 pub mod archive;
 pub mod docx;
 pub mod fixtures;
+pub mod fonts;
 pub mod imaging;
 pub mod imgio;
 pub mod kinds;
@@ -16,7 +17,13 @@ pub mod oumu;
 pub mod out;
 pub mod pdf;
 pub mod pdfgen;
+pub mod proc;
 pub mod report;
+#[cfg(windows)]
+pub mod winrt;
+/// Linux: the same API as `winrt` on poppler and libheif.
+#[cfg(not(windows))]
+#[path = "linux_codec.rs"]
 pub mod winrt;
 
 use std::sync::RwLock;

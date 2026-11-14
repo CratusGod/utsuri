@@ -9,10 +9,14 @@
 //!
 //!   cargo run -p utsuri-e2e -- [--only a,b] [--release] [--keep]
 
+#[cfg(windows)]
 mod input;
 
+#[cfg(windows)]
+mod app {
+
 use anyhow::{Context as _, Result, anyhow, bail};
-use input::*;
+use super::input::*;
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command};
@@ -642,7 +646,7 @@ fn handoff_case(app: &App, root: &Path, fx: &Path) -> Result<String> {
     Ok(format!("{title} via the pipe"))
 }
 
-fn main() -> Result<()> {
+pub fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
     let only: Option<Vec<String>> = args.iter().position(|a| a == "--only").and_then(|i| args.get(i + 1)).map(|s| s.split(',').map(|x| x.trim().to_lowercase()).collect());
     let release = args.iter().any(|a| a == "--release");
@@ -845,4 +849,17 @@ impl Explorer {
     fn close(&self) {
         close_window(self.hwnd);
     }
+}
+
+}
+
+#[cfg(windows)]
+fn main() {
+    app::main()
+}
+
+#[cfg(not(windows))]
+fn main() {
+    eprintln!("This tool is Windows-only; see tests/linux for the Linux harness.");
+    std::process::exit(2);
 }

@@ -12,6 +12,17 @@ use std::time::{Duration, Instant};
 /// Oumu reads at most 64 KiB per request; leave room for the command line.
 pub const MAX_BYTES: usize = 60_000;
 
+/// Linux: Oumu's socket in the runtime dir (`OUMU_SOCK` overrides it for tests).
+#[cfg(unix)]
+pub fn socket_path() -> PathBuf {
+    if let Some(p) = std::env::var_os("OUMU_SOCK") {
+        return PathBuf::from(p);
+    }
+    let run = std::env::var_os("XDG_RUNTIME_DIR").map(PathBuf::from).unwrap_or_else(std::env::temp_dir);
+    run.join("oumu.sock")
+}
+
+#[cfg(windows)]
 pub fn pipe_name() -> String {
     if let Ok(p) = std::env::var("OUMU_PIPE") {
         if p.starts_with(r"\\.\pipe\") {
@@ -22,13 +33,34 @@ pub fn pipe_name() -> String {
     format!(r"\\.\pipe\oumu-{}", if user.is_empty() { "user" } else { &user })
 }
 
+/// Oumu's socket exists.
+#[cfg(unix)]
+pub fn running() -> bool {
+    use std::os::unix::fs::FileTypeExt;
+    std::fs::metadata(socket_path()).map(|m| m.file_type().is_socket()).unwrap_or(false)
+}
+
 /// The pipe exists (listed, not opened: opening would use up Oumu's waiting connection).
+#[cfg(windows)]
 pub fn running() -> bool {
     let name = pipe_name();
     let short = name.trim_start_matches(r"\\.\pipe\");
     std::fs::read_dir(r"\\.\pipe\").map(|rd| rd.flatten().any(|e| e.file_name().to_string_lossy().eq_ignore_ascii_case(short))).unwrap_or(false)
 }
 
+#[cfg(unix)]
+pub fn find_exe() -> Option<PathBuf> {
+    if let Some(p) = std::env::var_os("OUMU_EXE").map(PathBuf::from).filter(|p| p.is_file()) {
+        return Some(p);
+    }
+    if let Some(p) = crate::ocr::which("oumu") {
+        return Some(p);
+    }
+    let home = std::env::var_os("HOME").map(PathBuf::from)?;
+    Some(home.join(".local/bin/oumu")).filter(|p| p.is_file())
+}
+
+#[cfg(windows)]
 pub fn find_exe() -> Option<PathBuf> {
     if let Some(p) = crate::ocr::which("oumu.exe") {
         return Some(p);
@@ -66,6 +98,16 @@ pub fn clip(text: &str, limit: usize) -> (String, bool) {
     (text[..end].to_string(), true)
 }
 
+#[cfg(unix)]
+fn try_send(text: &str) -> bool {
+    let Ok(mut s) = std::os::unix::net::UnixStream::connect(socket_path()) else { return false };
+    let _ = s.set_write_timeout(Some(Duration::from_millis(500)));
+    let mut msg = b"translate\n".to_vec();
+    msg.extend_from_slice(text.as_bytes());
+    s.write_all(&msg).is_ok()
+}
+
+#[cfg(windows)]
 fn try_send(text: &str) -> bool {
     // open existing, write only
     let Ok(mut f) = std::fs::OpenOptions::new().write(true).open(pipe_name()) else { return false };
@@ -82,9 +124,9 @@ pub fn send(text: &str) -> Result<()> {
         return Ok(());
     }
     let Some(exe) = find_exe() else { refuse!("Oumu isn't running. Start Oumu and try again.") };
-    use std::os::windows::process::CommandExt;
+    use crate::proc::Quiet as _;
     std::process::Command::new(exe)
-        .creation_flags(0x0000_0008 | 0x0000_0200) // DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
+        .detached()
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
@@ -110,6 +152,7 @@ mod tests {
         assert_eq!(clip("abc", 10), ("abc".to_string(), false));
     }
 
+    #[cfg(windows)]
     #[test]
     fn pipe_name_rules() {
         assert!(pipe_name().starts_with(r"\\.\pipe\oumu-"));

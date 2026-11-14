@@ -2,15 +2,13 @@
 
 use crate::refuse;
 use anyhow::Result;
-use std::os::windows::process::CommandExt;
+use crate::proc::Quiet as _;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
-const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-
 /// The tesseract executable: on PATH, or where the Windows installers put it.
 pub fn tesseract() -> Option<PathBuf> {
-    if let Some(p) = which("tesseract.exe") {
+    if let Some(p) = which(&crate::proc::exe_name("tesseract")) {
         return Some(p);
     }
     let bases = [std::env::var_os("ProgramFiles"), std::env::var_os("ProgramFiles(x86)"), std::env::var_os("LOCALAPPDATA").map(|d| PathBuf::from(d).join("Programs").into_os_string())];
@@ -25,7 +23,7 @@ pub fn which(exe: &str) -> Option<PathBuf> {
 /// Installed OCR languages (without "osd").
 pub fn langs() -> Vec<String> {
     let Some(exe) = tesseract() else { return vec![] };
-    let Ok(out) = Command::new(exe).arg("--list-langs").stdin(Stdio::null()).creation_flags(CREATE_NO_WINDOW).output() else { return vec![] };
+    let Ok(out) = Command::new(exe).arg("--list-langs").stdin(Stdio::null()).quiet().output() else { return vec![] };
     String::from_utf8_lossy(&out.stdout).lines().skip(1).map(str::trim).filter(|l| !l.is_empty() && *l != "osd").map(String::from).collect()
 }
 
@@ -50,7 +48,7 @@ fn check_lang(lang: &str) -> Result<PathBuf> {
 }
 
 fn run(exe: &Path, args: &[&std::ffi::OsStr]) -> Result<std::process::Output> {
-    Ok(Command::new(exe).args(args).stdin(Stdio::null()).creation_flags(CREATE_NO_WINDOW).output()?)
+    Ok(Command::new(exe).args(args).stdin(Stdio::null()).quiet().output()?)
 }
 
 fn last_line(b: &[u8]) -> String {

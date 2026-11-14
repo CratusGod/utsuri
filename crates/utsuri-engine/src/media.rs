@@ -5,7 +5,7 @@
 use crate::kinds::Kind;
 use crate::refuse;
 use anyhow::Result;
-use std::os::windows::process::CommandExt;
+use crate::proc::Quiet as _;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
@@ -42,7 +42,7 @@ fn args(target: &str) -> Vec<&'static str> {
 }
 
 pub fn ffmpeg() -> Option<PathBuf> {
-    crate::ocr::which("ffmpeg.exe")
+    crate::ocr::which(&crate::proc::exe_name("ffmpeg"))
 }
 
 pub fn available() -> bool {
@@ -77,7 +77,7 @@ fn run_ffmpeg(src: &Path, out: &Path, a: &[&str]) -> Result<PathBuf> {
             .args(a)
             .arg(&part)
             .stdin(Stdio::null())
-            .creation_flags(0x0800_0000)
+            .quiet()
             .output()?;
         let err = String::from_utf8_lossy(&res.stderr);
         if !res.status.success() || crate::out::file_size(&part) == 0 {
@@ -116,7 +116,7 @@ pub(crate) mod tests {
         let ok = Command::new(exe)
             .args(["-nostdin", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "testsrc=duration=2:size=320x240:rate=15", "-f", "lavfi", "-i", "sine=frequency=440:duration=2", "-shortest", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac"])
             .arg(&p)
-            .creation_flags(0x0800_0000)
+            .quiet()
             .status()
             .ok()?
             .success();

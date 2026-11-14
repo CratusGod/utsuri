@@ -129,6 +129,19 @@ fn room_for(total: u64, where_: &Path) -> Result<()> {
     Ok(())
 }
 
+#[cfg(unix)]
+fn free_space(p: &Path) -> Option<u64> {
+    use std::os::unix::ffi::OsStrExt;
+    let c = std::ffi::CString::new(p.as_os_str().as_bytes()).ok()?;
+    let mut st: libc::statvfs = unsafe { std::mem::zeroed() };
+    // SAFETY: `c` is a valid NUL-terminated path and `st` a writable statvfs.
+    if unsafe { libc::statvfs(c.as_ptr(), &mut st) } != 0 {
+        return None;
+    }
+    Some(st.f_bavail as u64 * st.f_frsize as u64)
+}
+
+#[cfg(windows)]
 fn free_space(p: &Path) -> Option<u64> {
     use windows::Win32::Storage::FileSystem::GetDiskFreeSpaceExW;
     let wide: Vec<u16> = p.as_os_str().encode_wide_null();
@@ -137,10 +150,12 @@ fn free_space(p: &Path) -> Option<u64> {
     Some(free)
 }
 
+#[cfg(windows)]
 trait Wide {
     fn encode_wide_null(&self) -> Vec<u16>;
 }
 
+#[cfg(windows)]
 impl Wide for std::ffi::OsStr {
     fn encode_wide_null(&self) -> Vec<u16> {
         use std::os::windows::ffi::OsStrExt;

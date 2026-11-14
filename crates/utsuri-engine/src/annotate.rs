@@ -48,10 +48,7 @@ fn font_bytes(bold: bool) -> Option<&'static [u8]> {
     use std::sync::OnceLock;
     static R: OnceLock<Option<Vec<u8>>> = OnceLock::new();
     static B: OnceLock<Option<Vec<u8>>> = OnceLock::new();
-    let load = |name: &str| {
-        let dir = std::env::var_os("WINDIR").map(PathBuf::from).unwrap_or_else(|| PathBuf::from(r"C:\Windows")).join("Fonts");
-        std::fs::read(dir.join(name)).ok()
-    };
+    let load = |name: &str| crate::fonts::read(name);
     if bold { B.get_or_init(|| load("segoeuib.ttf")).as_deref() } else { R.get_or_init(|| load("segoeui.ttf")).as_deref() }
 }
 
