@@ -32,6 +32,9 @@ const POLL_MS: i32 = 10;
 /// What the menu learns from a drag.
 pub enum Drag {
     Entered(Vec<PathBuf>),
+    /// The button went up over the menu: the files follow once the source hands them over
+    /// (keep the menu until then).
+    Dropping,
     Dropped(Vec<PathBuf>),
 }
 
@@ -44,11 +47,11 @@ enum Cmd {
 static TX: Mutex<Option<Sender<Cmd>>> = Mutex::new(None);
 
 /// Start the catcher thread; `deliver` gets every drag event (on that thread).
-pub fn start(deliver: impl Fn(Drag) + Send + 'static) {
+pub fn start(deliver: impl Fn(Drag) + Send + Sync + 'static) {
     let (tx, rx) = channel();
     *TX.lock().unwrap() = Some(tx);
     let spawned = std::thread::Builder::new().name("utsuri-dnd".into()).spawn(move || {
-        if let Err(e) = run(rx, Box::new(deliver)) {
+        if let Err(e) = run(rx, std::sync::Arc::new(deliver)) {
             log::warn!("file drops on the menu won't work: {e:#}");
         }
     });
@@ -99,7 +102,7 @@ struct State {
     configured: Option<u32>,
 }
 
-type Deliver = Box<dyn Fn(Drag) + Send>;
+type Deliver = std::sync::Arc<dyn Fn(Drag) + Send + Sync>;
 
 fn run(rx: Receiver<Cmd>, deliver: Deliver) -> anyhow::Result<()> {
     let conn = Connection::connect_to_env()?;
@@ -116,28 +119,7 @@ fn run(rx: Receiver<Cmd>, deliver: Deliver) -> anyhow::Result<()> {
     log::debug!("drop catcher ready");
 
     loop {
-        while let Ok(cmd) = rx.try_recv() {
-            match cmd {
-                Cmd::Show { x, y, w, h } => show_surface(&mut st, &mut queue, &qh, x, y, w, h),
-                Cmd::Hide => hide_surface(&mut st),
-            }
-            queue.flush()?;
-        }
-        if let Some((offer, dropped)) = st.want_files.take() {
-            let files = receive(&conn, &offer);
-            if dropped {
-                offer.finish();
-                offer.destroy();
-                st.offer = None;
-                queue.flush()?;
-                if !files.is_empty() {
-                    deliver(Drag::Dropped(files));
-                }
-            } else if !files.is_empty() {
-                deliver(Drag::Entered(files));
-            }
-        }
-        // wait for events (or the next command) without blocking forever
+        // events first: a drop already queued must be seen before a "hide" that came after it
         queue.flush()?;
         if let Some(guard) = queue.prepare_read() {
             let fd = guard.connection_fd().as_raw_fd();
@@ -149,11 +131,55 @@ fn run(rx: Receiver<Cmd>, deliver: Deliver) -> anyhow::Result<()> {
             }
         }
         queue.dispatch_pending(&mut st)?;
+        if let Some((offer, dropped)) = st.want_files.take() {
+            if dropped {
+                // the menu waits for these files; the source may take a moment to answer
+                deliver(Drag::Dropping);
+                st.offer = None;
+            }
+            // read on its own thread: the source answers through our connection's requests
+            // only, so events (a drop after an enter) keep flowing meanwhile
+            let (conn, deliver) = (conn.clone(), deliver.clone());
+            let _ = std::thread::Builder::new().name("utsuri-dnd-read".into()).spawn(move || {
+                let files = receive(&conn, &offer);
+                if dropped {
+                    offer.finish();
+                    offer.destroy();
+                    let _ = conn.flush();
+                    deliver(Drag::Dropped(files));
+                } else if !files.is_empty() {
+                    deliver(Drag::Entered(files));
+                }
+            });
+        }
+        while let Ok(cmd) = rx.try_recv() {
+            match cmd {
+                Cmd::Show { x, y, w, h } => show_surface(&mut st, &mut queue, &qh, x, y, w, h),
+                Cmd::Hide => hide_surface(&mut st),
+            }
+            queue.flush()?;
+        }
     }
 }
 
+/// The menu's own surface (Rune's layer surface, namespace "Utsuri") is mapped at (x, y).
+/// Surfaces on one layer stack in the order they map, so the catcher must map after it or
+/// the menu covers the catcher and swallows the drop (seen as ~1 in 12 lost drops).
+fn menu_mapped(x: i32, y: i32) -> bool {
+    let Some(reply) = super::hypr::request("j/layers") else { return true };
+    let Ok(v) = serde_json::from_str::<serde_json::Value>(&reply) else { return true };
+    v.as_object().into_iter().flat_map(|m| m.values()).filter_map(|mon| mon["levels"].as_object()).flat_map(|l| l.values()).filter_map(|ls| ls.as_array()).flatten().any(|l| l["namespace"] == "Utsuri" && l["x"].as_i64() == Some(x as i64) && l["y"].as_i64() == Some(y as i64))
+}
+
+/// Longest wait for the menu's surface before the catcher maps anyway.
+const MENU_MAP_WAIT: Duration = Duration::from_millis(400);
+
 fn show_surface(st: &mut State, queue: &mut EventQueue<State>, qh: &QueueHandle<State>, x: i32, y: i32, w: i32, h: i32) {
     hide_surface(st);
+    let until = Instant::now() + MENU_MAP_WAIT;
+    while !menu_mapped(x, y) && Instant::now() < until {
+        std::thread::sleep(Duration::from_millis(10));
+    }
     let (Some(comp), Some(ls)) = (st.g.compositor.clone(), st.g.layer_shell.clone()) else { return };
     let surface = comp.create_surface(qh, ());
     let layer = ls.get_layer_surface(&surface, None, Layer::Overlay, "utsuri-drop".into(), qh, ());

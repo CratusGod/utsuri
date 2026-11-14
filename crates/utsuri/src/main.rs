@@ -49,6 +49,9 @@ use utsuri_engine::report::Report;
 const TICK: Duration = Duration::from_millis(15);
 /// After the button goes up, give the drop event this long to land before hiding.
 const DROP_GRACE: Duration = Duration::from_millis(120);
+/// Linux: how long a drop's files may take to arrive from the source app.
+#[cfg(target_os = "linux")]
+const DROP_WAIT: Duration = Duration::from_secs(3);
 /// A job shows a spinner card only after this long.
 const SPINNER_AFTER: Duration = Duration::from_millis(150);
 /// Explorer starts us once per selected file: gather them this long, then one menu.
@@ -348,6 +351,15 @@ impl Hub {
         }
         self.menu.got_drag = true;
         self.push_menu();
+    }
+
+    /// A drop landed on the menu and its files are on the way (Wayland hands them over
+    /// after the button is up): keep the menu until they arrive.
+    #[cfg(target_os = "linux")]
+    pub fn menu_drop_pending(&mut self) {
+        if self.menu.visible {
+            self.menu.hide_at = Some(Instant::now() + DROP_WAIT);
+        }
     }
 
     /// Files dropped on the menu: run the slice under the pointer.
@@ -876,6 +888,11 @@ fn main() -> Result<()> {
         linux::dnd::start(move |d| {
             me5.update(move |h, tx| match d {
                 linux::dnd::Drag::Entered(files) => h.menu_drag_entered(files),
+                linux::dnd::Drag::Dropping => h.menu_drop_pending(),
+                linux::dnd::Drag::Dropped(files) if files.is_empty() => {
+                    log::debug!("drop: the source sent no files");
+                    h.hide_menu()
+                }
                 linux::dnd::Drag::Dropped(files) => {
                     for f in &files {
                         log::debug!("dropped: {}", f.display());
