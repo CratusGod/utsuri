@@ -23,6 +23,8 @@ def main() -> int:
     photo = next(p for p in (WORK / "files").iterdir() if p.suffix == ".jpg")
     (WORK / "control").write_text(f"{photo}\n")
     log = WORK / "utsuri.log"
+    # Ctrl, not Shift: the desktop's own Utsuri plugin answers Shift+drag
+    (WORK / "settings.json").write_text('{"trigger": "ctrl", "welcomed": true}')
     env = dict(os.environ, UTSURI_SETTINGS=str(WORK / "settings.json"), UTSURI_STATE_DIR=str(WORK / "state"),
                UTSURI_FAKE_TRASH=str(WORK / "trash"), UTSURI_PIPE="utsuri-spike", UTSURI_LOG=str(log),
                UTSURI_NO_WELCOME="1", UTSURI_NO_LAUNCH="1")
@@ -41,14 +43,17 @@ def main() -> int:
         desk.jump_to(230, 270)
         desk.button(True)
         desk.move_to(600, 400, steps=10)
-        desk.key("shift", True)
+        desk.key("ctrl", True)
         desk.move_to(604, 402, steps=3)  # the menu opens where the key went down
         time.sleep(0.6)
-        desk.key("shift", False)
+        subprocess.run(["grim", str(WORK / "menu.png")], check=False)
+        desk.key("ctrl", False)
         desk.move_to(600, 400 - 110, steps=6)
         time.sleep(0.3)
         desk.button(False)
-        time.sleep(3)
+        time.sleep(1.2)
+        subprocess.run(["grim", str(WORK / "toast.png")], check=False)
+        time.sleep(1.5)
     finally:
         desk.release_all()
         app.terminate()
