@@ -313,7 +313,12 @@ pub fn main() -> Result<()> {
     for (k, v) in &env {
         cmd.env(k, v);
     }
-    cmd.stderr(std::process::Stdio::null()).stdout(std::process::Stdio::null());
+    // UTSURI_E2E_STDERR=file: keep what the app prints (Rune's GPU messages, say)
+    let stderr = match std::env::var_os("UTSURI_E2E_STDERR") {
+        Some(f) => std::process::Stdio::from(std::fs::File::create(f)?),
+        None => std::process::Stdio::null(),
+    };
+    cmd.stderr(stderr).stdout(std::process::Stdio::null());
     let child = cmd.spawn()?;
     let app = App { child, log: state.join("log.txt"), exe: exe.clone(), env: env.clone() };
     wait_for(Duration::from_secs(20), || app.log_text().contains("ready (pipe").then_some(())).ok_or_else(|| anyhow!("Utsuri didn't start: {}", app.log_text()))?;
