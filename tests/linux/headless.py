@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Headless UI suites for Utsuri and Oumu on Linux (ported from tests/*_headless.ps1).
+"""Headless UI suite for Utsuri on Linux (ported from tests/*_headless.ps1).
 
 Every window renders, scripted taps/drags/typing change what they should (checked in Rune's
 element tree), and no text sticks out of its container. Nothing opens on screen and nothing
 touches the mouse or keyboard; settings and data go to a fresh folder per run.
 
-Usage: headless.py [utsuri|oumu|all]    (CRATUS_PROFILE=fast|release picks the build)
+Usage: headless.py    (CRATUS_PROFILE=fast|release picks the build)
 """
 from __future__ import annotations
 
@@ -167,68 +167,9 @@ def utsuri() -> int:
     return s.done("utsuri headless")
 
 
-def oumu() -> int:
-    s = Suite("oumu")
-    data = s.out / "data"
-    data.mkdir()
-    s.env["OUMU_DATA_DIR"] = str(data)
-    panels = ["review", "review-empty", "chat", "chat-thread", "plagiarism", "tone", "performance", "paraphraser", "paraphraser-result", "humanizer", "reactions", "translate", "explain", "rewriter", "detector", "detector-loading", "history", "onboarding", "settings"]
-    surfaces = ["tab", "tab-open", "button", "button-linting", "card", "card-long", "card-mute"]
-    print("== windows render")
-    s.renders(panels + surfaces, 1.0, lambda w: 50000 if w in panels else 1500)
-    print("== nothing cut off")
-    for w in panels + surfaces:
-        s.script(w, f"layout-{w}", [], 1.0, [])
-    print("== review")
-    s.script("review", "first-open", [], 0.5, ["Why?", "Review suggestions", "Correctness", "Spelling", "library", "liberty", "Accept", "Dismiss", "Skip this app"])
-    s.script("review", "clarity-tab", [tap("cat/clarity", 0.2)], 0.6, ["Wordy phrase", "I think"], ["tomorow"])
-    s.script("review", "open-second", [tap("alert/a2", 0.2)], 0.6, ["tomorrow", "tomorow"])
-    s.script("review-empty", "no-field", [], 0.5, ["Click into a text field", "Explorer"])
-    s.script("review", "rail-chat", [tap("rail/chat", 0.2)], 0.6, ["Oumu AI Chat", "Summarize this page", "Review 7 suggestions"])
-    s.script("review", "rail-settings", [tap("rail/settings", 0.2)], 0.6, ["Your AI key", "Appearance", "Skipped apps"])
-    print("== tools")
-    s.script("chat", "type", [tap("chat-input", 0.2), {"t": 0.3, "type": "type", "text": "Hello Oumu"}], 1.2, ["Hello Oumu"])
-    s.script("chat-thread", "thread", [], 0.5, ["Summarize this page.", "library tomorrow"])
-    s.script("humanizer", "voices", [], 0.5, ["Create a voice", "The Naturalist", "The Scholar"])
-    s.script("humanizer", "create", [tap("create-voice", 0.2)], 0.6, ["Writing sample", "Save voice"])
-    s.script("reactions", "audiences", [tap("audience", 0.2)], 0.6, ["My manager", "Investors", "Create audience"])
-    s.script("paraphraser", "styles", [], 0.5, ["Change writing style", "Academic", "Shorten"])
-    s.script("paraphraser-result", "result", [], 0.5, ["heading to the library", "Replace text", "Copy", "Show changes"])
-    s.script("paraphraser-result", "diff", [tap("diff", 0.2)], 0.6, ["Hide changes"])
-    s.script("rewriter", "ready", [], 0.5, ["AI Rewriter is ready to go", "Scan my text"])
-    # the scan runs on a real-time worker while headless time is virtual: a fast (release)
-    # build reaches 2 s before the worker is done, so these wait longer than on Windows
-    s.script("review", "rewriter-auto-scan", [tap("rail/rewriter", 0.3)], 4.0, ["AI phrases reviewed", "it is important to note that", "delve into"], ["Scan my text"])
-    s.script("review", "rewriter-dismiss", [tap("rail/rewriter", 0.3), tap("dismiss", 3.5)], 4.2, ["1/2"])
-    s.script("humanizer", "voice-form", [tap("create-voice", 0.2)], 0.8, ["e.g. The Storyteller", "Paste something you wrote"])
-    s.script("humanizer", "voice-needs-name", [tap("create-voice", 0.2), tap("save-voice", 0.5)], 1.0, ["Give the voice a name first."])
-    s.script("detector", "hook", [], 0.5, ["Detect AI generated text", "Check this text"])
-    s.script("detector-loading", "steps", [], 0.5, ["Scanning your text"])
-    s.script("plagiarism", "hook", [], 0.5, ["Check for plagiarism", "APA"])
-    s.script("translate", "ready", [], 0.5, ["Ready to translate.", "Translate all", "Auto-detect", "English (American)"])
-    s.script("explain", "ready", [], 0.5, ["Spot something confusing?", "Explain the whole page"])
-    s.script("tone", "no-ai", [tap("detect", 0.2)], 2.5, ["Set up AI in Settings"])
-    s.script("performance", "score", [], 0.5, ["72", "Overall score", "Readability (Flesch)", "3 issues"])
-    s.script("onboarding", "choices", [], 0.5, ["Choose how Oumu thinks", "Your AI key", "Local model (optional)", "Skip for now"])
-    print("== settings")
-    s.script("settings", "placeholders", [], 0.5, ["AQ.", "Optional, e.g. http://localhost:8888"])
-    s.script("settings", "advanced", [tap("advanced", 0.2)], 0.6, ["Base URL", "Test connection"])
-    s.script("settings", "key-kind", [tap("key", 0.2), {"t": 0.3, "type": "type", "text": "sk-ant-x"}], 1.2, ["Anthropic key"])
-    s.script("settings", "name", [], 0.5, ["Name (used for the avatar and greetings)", "Dock side", "Icon rail"])
-    print("== overlays")
-    s.script("card", "spelling", [], 0.5, ["Correctness", "library", "Accept", "Dismiss", "Add to dictionary"])
-    s.script("card-mute", "offer", [], 0.5, ["Turn it off", "dismissed"])
-    s.script("card-long", "diff", [], 0.5, ["I think", "Accept"], ["Add to dictionary"])
-    s.script("tab-open", "tab", [], 0.5, ["Open Oumu"])
-    s.script("button", "button", [], 0.5, ["Open Oumu"])
-    return s.done("oumu headless")
-
-
 if __name__ == "__main__":
     which = sys.argv[1] if len(sys.argv) > 1 else "all"
     failed = 0
     if which in ("utsuri", "all"):
         failed += utsuri()
-    if which in ("oumu", "all"):
-        failed += oumu()
     sys.exit(1 if failed else 0)

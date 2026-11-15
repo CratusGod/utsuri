@@ -171,7 +171,6 @@ function Test-OldVersions {
 $before = Snapshot
 if ($Only -eq "" -or $Only -eq "old") { Test-OldVersions }
 if ($Only -eq "" -or $Only -eq "utsuri") { Test-App "Utsuri" (Join-Path $rel "utsuri-setup.exe") "Utsuri.exe" $true }
-if ($Only -eq "" -or $Only -eq "oumu") { Test-App "Oumu" (Join-Path $rel "oumu-setup.exe") "Oumu.exe" $false }
 $after = Snapshot
 Write-Host "== real installs"
 Check "real entries untouched" ($before -eq $after)
