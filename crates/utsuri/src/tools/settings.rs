@@ -42,7 +42,7 @@ impl Tool for SettingsWindow {
         "Settings".into()
     }
     fn size(&self) -> (f32, f32) {
-        (600.0, 560.0)
+        (600.0, 596.0)
     }
     fn enter(_s: &mut S, tx: &mut Tx) {
         tx.close_window();
@@ -109,11 +109,21 @@ impl Tool for SettingsWindow {
                 Err(e) => s.error("Couldn't change the right-click menu", e.to_string()),
             }
         });
+        let updates = checkbox("updates", st.check_updates, "Check for updates automatically", th).on_press(|s: &mut S| {
+            s.t.s.check_updates = !s.t.s.check_updates;
+            changed(s);
+        });
         let footer = row()
             .w_full()
             .items_center()
             .child(dim(concat!("Utsuri ", env!("CARGO_PKG_VERSION"), "  ·  originals are never modified"), th))
             .child(rune::spacer())
+            .child(pill("check-updates", "Check for updates", th).on_press(|s: &mut S| {
+                if let Some(app) = s.app.clone() {
+                    app.update(|h, _| h.check_updates(true));
+                }
+            }))
+            .child(el().w(10.0))
             .child(primary("done", "Done", true, th).on_press_tx(|_s: &mut S, tx: &mut Tx| tx.close_window()));
         col()
             .w_full()
@@ -126,7 +136,7 @@ impl Tool for SettingsWindow {
             .child(line("PDF → image resolution", dpi))
             .child(line("Text recognition", ocr))
             .child(line("Theme", theme))
-            .child(row().w_full().gap(14.0).child(el().w(180.0)).child(col().gap(10.0).child(start).child(shell)))
+            .child(row().w_full().gap(14.0).child(el().w(180.0)).child(col().gap(10.0).child(start).child(shell).child(updates)))
             .child(rune::spacer())
             .child(footer)
     }

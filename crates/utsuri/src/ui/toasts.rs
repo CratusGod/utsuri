@@ -18,12 +18,16 @@ pub const PAD: f32 = 12.0;
 pub const HEIGHT: f32 = 5.0 * 129.0 + 4.0 * GAP + 2.0 * PAD;
 const DONE_TTL: Duration = Duration::from_secs(7);
 const ERROR_TTL: Duration = Duration::from_secs(10);
+/// An update card waits longer: it asks something.
+const UPDATE_TTL: Duration = Duration::from_secs(60);
 
 pub enum Body {
     Working { title: String, detail: String },
     Done(Box<Report>, Option<rune::Pixels>),
     Error { title: String, msg: String },
     Info { title: String, msg: String },
+    /// A newer version: Update / Later.
+    Update { version: String },
 }
 
 pub struct Toast {
@@ -82,6 +86,7 @@ impl Stack {
             let ttl = match t.body {
                 Body::Working { .. } => return true,
                 Body::Error { .. } => ERROR_TTL,
+                Body::Update { .. } => UPDATE_TTL,
                 _ => DONE_TTL,
             };
             t.hover_until.is_some_and(|h| h > now) || now.duration_since(t.born) < ttl
@@ -92,6 +97,7 @@ impl Stack {
     pub fn height_of(t: &Toast) -> f32 {
         match &t.body {
             Body::Working { .. } => 66.0,
+            Body::Update { .. } => 110.0,
             Body::Done(r, _) => if r.outs.is_empty() || t.undone { 82.0 } else { 118.0 },
             Body::Error { msg, .. } | Body::Info { msg, .. } => 78.0 + (msg.chars().count() as f32 / 48.0).floor().min(3.0) * 17.0,
         }
@@ -126,11 +132,21 @@ impl Stack {
 /// The buttons of a result card: label, width, offset from the card's left.
 pub const BUTTONS: [(&str, f32); 3] = [("Open", 58.0), ("Show in folder", 116.0), ("Undo", 58.0)];
 pub const BUTTONS_X: f32 = 78.0;
+/// The buttons of an update card.
+pub const UPDATE_BUTTONS: [(&str, f32); 2] = [("Update", 76.0), ("Later", 64.0)];
+pub const UPDATE_X: f32 = 54.0;
 
 /// Where each card's buttons are (window logical px): (toast id, label, x, y, w, h).
 pub fn button_rects(stack: &Stack) -> Vec<(u64, &'static str, [f32; 4])> {
     let mut out = vec![];
     for (t, r) in stack.toasts.iter().zip(stack.rects()) {
+        if let Body::Update { .. } = &t.body {
+            let (mut x, y) = (r[0] + UPDATE_X, r[3] - 38.0);
+            for (l, w) in UPDATE_BUTTONS {
+                out.push((t.id, l, [x, y, w, 26.0]));
+                x += w + 8.0;
+            }
+        }
         if let Body::Done(rep, _) = &t.body {
             if rep.outs.is_empty() || t.undone {
                 continue;
@@ -150,6 +166,8 @@ pub enum Action {
     Reveal(PathBuf),
     Undo(u64, Vec<PathBuf>),
     Close(u64),
+    /// Install the update the card offers (and close it).
+    Update(u64),
 }
 
 pub struct ToastS {
@@ -227,6 +245,31 @@ pub fn view(s: &ToastS, _cx: &mut Cx<ToastS>) -> El {
                     .child(el().absolute(x, 14.0).size(26.0, 26.0).radius(13.0).fill(badge).center().child(text(if is_err { "!" } else { "i" }).font(font(15.0, 700.0)).color(Color::WHITE)))
                     .child(text(title).font(font(14.5, 600.0)).color(lab).absolute(x + 38.0, 15.0))
                     .child(text(msg.clone()).wrap().font(SMALL).color(dimc).absolute(x + 38.0, 37.0).w(cw - x - 38.0 - 34.0));
+            }
+            Body::Update { version } => {
+                card = card
+                    .child(el().absolute(x, 14.0).size(26.0, 26.0).radius(13.0).fill(accent.alpha(0.85)).center().child(text("↑").font(font(15.0, 700.0)).color(Color::WHITE)))
+                    .child(text(format!("Utsuri {version} is available")).font(font(14.5, 600.0)).color(lab).absolute(UPDATE_X - 16.0 + x, 15.0))
+                    .child(text("Update now? Utsuri closes and opens again by itself.").wrap().font(SMALL).color(dimc).absolute(UPDATE_X - 16.0 + x, 37.0).w(cw - UPDATE_X - 34.0));
+                let mut bx = UPDATE_X;
+                for (i, (l, bw)) in UPDATE_BUTTONS.iter().enumerate() {
+                    let b = row()
+                        .key(format!("toast/{id}/{l}"))
+                        .absolute(bx, ch - 38.0)
+                        .size(*bw, 26.0)
+                        .radius(13.0)
+                        .center()
+                        .cursor(rune::Cursor::Pointer)
+                        .role("button")
+                        .label(*l);
+                    let b = if i == 0 {
+                        b.linear_gradient(0.0, [(0.0, col_of(th.accent_a)), (1.0, col_of(th.accent_b))]).border(1.0, white(0.35)).child(text(*l).font(font(12.5, 600.0)).color(Color::WHITE))
+                    } else {
+                        b.fill(white(0.10)).border(1.0, white(0.18)).hover(white(0.12)).child(text(*l).font(font(12.5, 500.0)).color(lab))
+                    };
+                    card = card.child(b.on_press(move |s: &mut ToastS| act(s, if i == 0 { Action::Update(id) } else { Action::Close(id) })));
+                    bx += bw + 8.0;
+                }
             }
             Body::Done(rep, thumb) => {
                 let icon = match (thumb, t.undone) {

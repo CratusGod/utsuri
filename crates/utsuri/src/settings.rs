@@ -19,6 +19,8 @@ pub struct Settings {
     pub start_at_login: bool,
     pub shell_menu: bool,
     pub welcomed: bool,
+    /// Look for a newer version on GitHub now and then.
+    pub check_updates: bool,
 }
 
 impl Default for Settings {
@@ -33,6 +35,7 @@ impl Default for Settings {
             start_at_login: false,
             shell_menu: false,
             welcomed: false,
+            check_updates: true,
         }
     }
 }

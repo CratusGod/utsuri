@@ -16,7 +16,13 @@ The Python version of Utsuri is kept in this repo's history: tag `python-final`.
 
 ## Install on Windows
 
-Build the installer from source (there are no prebuilt downloads yet):
+Download `Utsuri-Setup.exe` from the [latest release](https://github.com/CratusGod/utsuri/releases/latest)
+and run it. It installs per user (no admin), adds a Start menu entry, starts with Windows, and
+can be removed from Settings > Apps. An installed Utsuri updates itself: it looks for a new
+release a little after it starts and twice a day (turn that off in Settings), and "Update"
+downloads the new setup, checks its SHA-256 and installs it over the old one.
+
+Or build the installer from source:
 
 1. Install [Rust](https://rustup.rs) and the
    [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) with
@@ -46,8 +52,9 @@ desktops are untested. Right-click "Utsuri…" is added to Dolphin and to "Open 
 
 ## Privacy
 
-No accounts, telemetry or update checks. Files are processed locally; originals are never
-modified (results are written next to them, and Undo moves a result to the trash).
+No accounts or telemetry. The only network use is the update check, which asks GitHub for
+the newest release of this repo (turn it off in Settings). Files are processed locally;
+originals are never modified (results are written next to them, and Undo moves a result to the trash).
 
 ## Development
 
@@ -62,6 +69,9 @@ cargo run -p utsuri
   `python3 tests/linux/headless.py` on Linux.
 - Real-screen tests (they move the mouse and type; leave the PC alone meanwhile):
   `cargo run -p utsuri-e2e` (both platforms), `tests\install_test.ps1` (Windows).
+- A release: bump the version in `crates/utsuri/Cargo.toml` and `crates/install` (a unit test
+  checks they match), then `packaging\release.ps1 -Publish` builds the setup, checks it
+  carries no paths from the build PC, and makes the GitHub release the updater reads.
 - Design notes, Rune patches and lessons learned: [docs/NOTES.md](docs/NOTES.md).
 
 `vendor/rune` is Rune at rev `c369cc0` with a few patches (search for "cratus-rs"), and

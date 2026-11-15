@@ -71,7 +71,19 @@ fn menu_window(key: &str, state: MenuS) -> rune::AnyWindowSpec {
 }
 
 fn toasts_window() -> rune::AnyWindowSpec {
+    toasts_window_with("toasts", false)
+}
+
+/// `update`: the update card alone (its buttons are scripted).
+fn toasts_window_with(key: &'static str, update: bool) -> rune::AnyWindowSpec {
     let mut s = ToastS::new(theme());
+    if update {
+        s.stack.push_id(1, Body::Update { version: "2.0.1".into() });
+        let (w, h) = s.stack.window_size();
+        let mut s = Some(s);
+        let app = rune::App::new(rune::AppSpec::new(key, (w, h), || unreachable!(), crate::ui::toasts::view)).init(move || s.take().unwrap());
+        return WindowSpec::from_app(key, app).options(clear()).boxed();
+    }
     let photo = fixture("photo.jpg");
     let thumb = utsuri_engine::imgio::open_preview(&photo, 128).ok().map(|im| crate::ui::pixels_of(&im));
     let rep = Report::new("JPG → WEBP", "photo.webp · 1600×1067 · 212 KB", vec![photo.with_extension("webp")], vec![photo.clone()]).good("75% smaller");
@@ -96,6 +108,7 @@ pub fn run() {
         menu_window("menu-hub", menu_state("report.pdf", 0, Some(Hit::Hub), false)),
         menu_window("menu-click", menu_state("letter.docx", 0, None, true)),
         toasts_window(),
+        toasts_window_with("toast-update", true),
         tool_window("settings", crate::tools::settings::SettingsWindow::new(), String::new()),
         tool_window("welcome", crate::tools::settings::Welcome { key: "Shift".into() }, String::new()),
     ];

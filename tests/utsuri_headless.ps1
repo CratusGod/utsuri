@@ -55,7 +55,7 @@ function Script($window, $name, $events, $at, [string[]]$expect, [string[]]$abse
 Write-Host "== windows render"
 Run @("--list-windows") | Out-Null
 $list = Get-Content (Join-Path $out "stdout.txt") | Where-Object { $_ -and $_ -notmatch "^rune:" }
-$want = @("menu", "menu-tools", "menu-hub", "menu-click", "toasts", "settings", "welcome", "compress", "edit", "crop", "redact", "annotate", "addbg", "stamp", "organize", "resize", "metadata", "pdf-metadata", "protect", "unlock")
+$want = @("menu", "menu-tools", "menu-hub", "menu-click", "toasts", "toast-update", "settings", "welcome", "compress", "edit", "crop", "redact", "annotate", "addbg", "stamp", "organize", "resize", "metadata", "pdf-metadata", "protect", "unlock")
 foreach ($w in $want) {
     if ($list -notcontains $w) { Check "listed: $w" $false; continue }
     $png = Join-Path $out "$w.png"
@@ -97,6 +97,13 @@ Script "addbg" "aspect" @('{"t":0.2,"type":"tap","key":"aspect/1"}', '{"t":0.3,"
 Script "settings" "trigger" @('{"t":0.2,"type":"tap","key":"trigger/1"}', '{"t":0.4,"type":"tap","key":"dpi/3"}') 0.8 @("Ctrl + drag", "300 dpi")
 $saved = if (Test-Path $env:UTSURI_SETTINGS) { Get-Content -Raw $env:UTSURI_SETTINGS | ConvertFrom-Json } else { $null }
 Check "settings saved to the test file" ($saved -and $saved.trigger -eq "ctrl" -and $saved.pdf_dpi -eq 300)
+
+Write-Host "== updates"
+Script "toast-update" "update-card" @() 0.5 @("Utsuri 2.0.1 is available", "Update now?", "Update", "Later")
+Script "settings" "update-controls" @() 0.5 @("Check for updates automatically", "Check for updates")
+Script "settings" "updates-off" @('{"t":0.2,"type":"tap","key":"updates"}') 0.6 @()
+$saved = if (Test-Path $env:UTSURI_SETTINGS) { Get-Content -Raw $env:UTSURI_SETTINGS | ConvertFrom-Json } else { $null }
+Check "turning automatic update checks off is saved" ($saved -and $saved.check_updates -eq $false)
 
 if (-not $KeepPngs) { Get-ChildItem $out -Filter *.json | Remove-Item }
 Write-Host ""

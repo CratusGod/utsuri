@@ -33,6 +33,7 @@ mod shell;
 mod tools;
 mod trigger;
 mod ui;
+mod update;
 
 use anyhow::Result;
 use rune::{AppHandle, OverlayHandle, OverlayOptions, OverlayPlacement, OverlaySpec, Tx};
@@ -161,6 +162,7 @@ pub struct Hub {
     /// the menu is shown once off screen at startup, so its first real show is instant
     warm_until: Option<Instant>,
     last_expire: Instant,
+    updater: update::Updater,
 }
 
 fn names_of(srcs: &[PathBuf]) -> String {
@@ -222,6 +224,7 @@ impl Hub {
             tray: None,
             warm_until: None,
             last_expire: Instant::now(),
+            updater: update::Updater::default(),
         }
     }
 
@@ -557,11 +560,16 @@ impl Hub {
             Action::Reveal(_) => "reveal",
             Action::Close(_) => "close",
             Action::Undo(..) => "undo",
+            Action::Update(_) => "update",
         });
         match a {
             Action::Open(p) => shell::open(&p),
             Action::Reveal(p) => shell::reveal(&p),
             Action::Close(id) => self.toasts(move |s| s.stack.remove(id)),
+            Action::Update(id) => {
+                self.toasts(move |s| s.stack.remove(id));
+                self.install_update();
+            }
             Action::Undo(id, outs) => match utsuri_engine::out::trash(&outs) {
                 Ok(_) => self.toasts(move |s| {
                     if let Some(t) = s.stack.toasts.iter_mut().find(|t| t.id == id) {
@@ -654,16 +662,21 @@ impl Hub {
                 "quit" => tx.quit(),
                 "pause" => {
                     self.watcher.enabled = !self.watcher.enabled;
-                    if let Some(t) = &self.tray {
-                        t.set_menu(tray_menu(self.watcher.enabled));
-                    }
+                    self.refresh_tray();
                 }
                 "open" => self.open_dialog(),
                 "settings" => self.open_settings(),
                 "help" => self.welcome(),
+                "update" => self.install_update(),
                 _ => {}
             },
             _ => {}
+        }
+    }
+
+    pub fn refresh_tray(&self) {
+        if let Some(t) = &self.tray {
+            t.set_menu(tray_menu(self.watcher.enabled, self.updater.found.as_ref().map(|r| r.version.as_str())));
         }
     }
 
@@ -765,7 +778,7 @@ impl Hub {
     }
 }
 
-fn tray_menu(enabled: bool) -> Vec<rune::tray::TrayItem> {
+fn tray_menu(enabled: bool, update: Option<&str>) -> Vec<rune::tray::TrayItem> {
     use rune::tray::TrayItem;
     vec![
         TrayItem::action("pause", if enabled { "Pause Utsuri" } else { "Resume Utsuri" }),
@@ -773,6 +786,10 @@ fn tray_menu(enabled: bool) -> Vec<rune::tray::TrayItem> {
         TrayItem::Separator,
         TrayItem::action("settings", "Settings…"),
         TrayItem::action("help", "How to use"),
+        TrayItem::action("update", match update {
+            Some(v) => format!("Update to {v}"),
+            None => "Check for updates".to_string(),
+        }),
         TrayItem::Separator,
         TrayItem::action("quit", "Quit Utsuri"),
     ]
@@ -854,7 +871,7 @@ fn main() -> Result<()> {
 
     // the tray (Shell_NotifyIcon on its own thread)
     let me2 = me.clone();
-    let tray = rune::tray::Tray::new(rune::tray::TraySpec::new("utsuri", "Utsuri", rune::tray::TrayIcon::rgba(32, 32, icon_rgba(32))).tooltip(hub.tooltip()).menu(tray_menu(true)), move |e| {
+    let tray = rune::tray::Tray::new(rune::tray::TraySpec::new("utsuri", "Utsuri", rune::tray::TrayIcon::rgba(32, 32, icon_rgba(32))).tooltip(hub.tooltip()).menu(tray_menu(true, None)), move |e| {
         me2.update(move |h, tx| h.tray_event(e, tx));
     });
     match tray {
@@ -908,6 +925,7 @@ fn main() -> Result<()> {
         }
     }
     log::info!("ready (pipe {})", ipc::pipe_name());
+    update::start_schedule(me.clone());
     // finding ffmpeg and Tesseract starts programs (half a second): do it now, off the UI
     // thread, not during the first drag
     std::thread::spawn(|| {
