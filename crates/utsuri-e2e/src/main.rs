@@ -17,7 +17,7 @@ mod input;
 #[cfg(windows)]
 mod app {
 
-use anyhow::{Context as _, Result, anyhow, bail};
+use anyhow::{Result, anyhow, bail};
 use super::input::*;
 use crate::cases::*;
 use std::io::Write as _;
@@ -473,7 +473,7 @@ impl Explorer {
 }
 
 #[cfg(windows)]
-fn main() {
+fn main() -> anyhow::Result<()> {
     app::main()
 }
 
