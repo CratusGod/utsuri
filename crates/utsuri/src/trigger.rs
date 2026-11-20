@@ -81,6 +81,21 @@ impl Raw {
     }
 }
 
+/// Holding fire + Shift (or Shift+clicking an inventory) is normal in a game, so the menu
+/// never opens over one: anything fullscreen, a Steam/Proton/gamescope game, CS2, or
+/// Minecraft (by its class, or a Java process whatever class the launcher sets; not by
+/// title, which would catch a browser tab about Minecraft).
+pub fn is_game(class: &str, fullscreen: bool, comm: &str) -> bool {
+    let class = class.to_ascii_lowercase();
+    fullscreen
+        || class.starts_with("steam_app_")
+        || class.ends_with(".exe")
+        || class.starts_with("gamescope")
+        || class == "cs2"
+        || class.starts_with("minecraft")
+        || comm == "java"
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Event {
     /// Open the menu centred here.
@@ -195,6 +210,19 @@ mod tests {
             hid |= w.tick(inp(true, true, 100), true, false) == Some(Event::Hide);
         }
         assert!(hid);
+    }
+
+    #[test]
+    fn games_are_recognised() {
+        assert!(is_game("Minecraft* 1.21.1", false, "x"));
+        assert!(is_game("org-lwjgl", false, "java"));
+        assert!(is_game("org.kde.dolphin", true, "dolphin"));
+        assert!(is_game("steam_app_730", false, "x"));
+        assert!(is_game("cs2", false, "x"));
+        assert!(is_game("eldenring.exe", false, "x"));
+        assert!(is_game("gamescope", false, "gamescope"));
+        assert!(!is_game("org.kde.dolphin", false, "dolphin"));
+        assert!(!is_game("zen", false, "zen"));
     }
 
     #[test]

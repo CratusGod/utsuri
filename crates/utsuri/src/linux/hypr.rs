@@ -88,6 +88,23 @@ pub fn monitor_at(p: (i32, i32)) -> Option<Monitor> {
     all.iter().copied().find(|m| m.contains(p)).or_else(|| all.first().copied())
 }
 
+/// The focused window is a game (see `trigger::is_game`). False when Hyprland doesn't answer.
+pub fn active_is_game() -> bool {
+    request("j/activewindow").and_then(|j| parse_active(&j)).is_some_and(|(class, fs, pid)| {
+        let comm = std::fs::read_to_string(format!("/proc/{pid}/comm")).unwrap_or_default();
+        crate::trigger::is_game(&class, fs, comm.trim())
+    })
+}
+
+/// class, fullscreen, pid of `j/activewindow` (an empty object when nothing has focus).
+fn parse_active(j: &str) -> Option<(String, bool, i64)> {
+    let v: serde_json::Value = serde_json::from_str(j).ok()?;
+    let s = |k: &str| v.get(k).and_then(|x| x.as_str()).unwrap_or("").to_string();
+    let class = if s("class").is_empty() { s("initialClass") } else { s("class") };
+    let fs = v.get("fullscreen").and_then(|x| x.as_i64().or(x.as_bool().map(i64::from))).unwrap_or(0) != 0;
+    Some((class, fs, v.get("pid")?.as_i64()?))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -101,5 +118,14 @@ mod tests {
         assert_eq!((m.w, m.h), (2048, 1152));
         assert_eq!(m.work_area(), (0, 40, 2048, 1112));
         assert!(m.contains((100, 100)) && !m.contains((3000, 0)));
+    }
+
+    #[test]
+    fn parses_active_window() {
+        let j = r#"{"class":"Minecraft* 1.21.1","initialClass":"x","title":"Minecraft","fullscreen":0,"pid":42}"#;
+        assert_eq!(parse_active(j), Some(("Minecraft* 1.21.1".into(), false, 42)));
+        let j = r#"{"class":"","initialClass":"cs2","title":"","fullscreen":2,"pid":7}"#;
+        assert_eq!(parse_active(j), Some(("cs2".into(), true, 7)));
+        assert_eq!(parse_active("{}"), None);
     }
 }

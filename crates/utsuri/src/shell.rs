@@ -157,3 +157,8 @@ pub fn cursor() -> (i32, i32) {
     }
     (p.x, p.y)
 }
+
+/// The focused window is a game. Not checked on Windows yet.
+pub fn game_in_front() -> bool {
+    false
+}

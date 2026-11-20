@@ -178,6 +178,11 @@ pub fn uninstall_shell_menu(suffix: &str) -> Result<()> {
 
 // ---------------------------------------------------------------- screen
 
+/// The focused window is a game, where Shift+drag is play, not a file drag.
+pub fn game_in_front() -> bool {
+    crate::linux::hypr::active_is_game()
+}
+
 /// The work area (screen minus bars) of the monitor at a point, layout px.
 pub fn work_area_at(x: i32, y: i32) -> (i32, i32, i32, i32) {
     crate::linux::hypr::monitor_at((x, y)).map(|m| m.work_area()).unwrap_or((0, 0, 1920, 1080))

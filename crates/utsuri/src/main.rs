@@ -749,6 +749,7 @@ impl Hub {
         self.last_poll = Instant::now();
         let input = raw.input(self.settings.key());
         match self.watcher.tick(input, self.menu.visible, self.menu.got_drag) {
+            Some(trigger::Event::Show(_)) if shell::game_in_front() => log::debug!("trigger ignored: a game has focus"),
             Some(trigger::Event::Show(pos)) => self.show_menu(pos, false),
             Some(trigger::Event::ToggleRing) => self.next_ring(),
             Some(trigger::Event::HideSoon) => {
